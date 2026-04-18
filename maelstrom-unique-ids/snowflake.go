@@ -27,7 +27,7 @@ func (sg *SnowflakeGen) NextId() uint64 {
 		sg.sequence = (sg.sequence + 1) & 0xFFF
 		// wait for next ms
 		if sg.sequence == 0 {
-			for now == sg.lastTimestamp {
+			for now <= sg.lastTimestamp {
 				now = time.Now().UnixMilli()
 			}
 		}
