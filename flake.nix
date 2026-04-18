@@ -23,7 +23,7 @@
           version = maelstrom-version;
           src = pkgs.fetchurl {
             url = maelstrom-url;
-            sha256 = "sha256-R3N/l+Uq2UvMcl6D4K6vNqG67yv7I4N1D0M9R6nC8zU=";
+            sha256 = "sha256-ISS2qma139Jz9eDxLJvULkqDZeu1vyx9ot4uO0LIVho=";
           };
 
           nativeBuildInputs = [ pkgs.makeWrapper ];
