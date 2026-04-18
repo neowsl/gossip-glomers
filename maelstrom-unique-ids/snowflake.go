@@ -5,6 +5,9 @@ import (
 	"time"
 )
 
+// SnowflakeGen allows for generation of unique IDs.
+// A SnowflakeGen is safe for concurrent use by multiple goroutines.
+// The epoch and nodeId should be set when the node is initialised.
 type SnowflakeGen struct {
 	mu            sync.Mutex
 	lastTimestamp int64
@@ -13,6 +16,7 @@ type SnowflakeGen struct {
 	sequence      uint64
 }
 
+// NextId returns a 64-bit unique id.
 func (sg *SnowflakeGen) NextId() uint64 {
 	sg.mu.Lock()
 	defer sg.mu.Unlock()
