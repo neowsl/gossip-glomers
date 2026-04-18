@@ -4,6 +4,8 @@
 
 In my ongoing efforts to procrastinate from schoolwork, I stumbled across this challenge, [Gossip Glomers](https://fly.io/dist-sys) by [Fly.io](https://fly.io). I thought it'd be a nice way to develop some Go skills while also learning about distributed systems!
 
+![Crafted by Human](https://madebyhuman.iamjarl.com/badges/crafted-white.svg)
+
 ## Challenges
 
 ### 1. Echo
