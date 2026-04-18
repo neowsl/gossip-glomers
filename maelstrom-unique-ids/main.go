@@ -9,7 +9,13 @@ import (
 func main() {
 	n := maelstrom.NewNode()
 
-	sg := NewSnowflakeGen(n.ID())
+	var sg *SnowflakeGen
+
+	n.Handle("init", func(msg maelstrom.Message) error {
+		sg = NewSnowflakeGen(n.ID())
+
+		return nil
+	})
 
 	n.Handle("generate", func(msg maelstrom.Message) error {
 		res := map[string]any{
