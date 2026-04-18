@@ -33,3 +33,7 @@ After finishing, I collected and refactored all the ID generation logic into a s
 - I used the above scheme of bits to mimic Twitter's own standard. However, if we have less mac hines running, we can shrink the size of `node id`, or if less throughput is necessary, we can shrink the size of `sequence`.
 - Extra bits are always fun to play with! Perhaps a parity bit for error checking, or a few bits could signify the priority/type of message?
 - Why the line `now <= sg.lastTimestamp`? Time skips can occur, and if `now` is stepped backwards, we could potentially hand out an ID we already used. `<=` lets us avoid this problem.
+
+### 3a. Single-Node Broadcast
+
+A bit easier than Unique ID Generation. Simply store all incoming messages in a `int` slice, then send them out upon request. Remember to use a mutex to lock edits to the messages!

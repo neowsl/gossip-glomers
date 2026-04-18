@@ -1,9 +1,9 @@
 package main
 
 import (
-	"container/list"
 	"encoding/json"
 	"log"
+	"sync"
 
 	maelstrom "github.com/jepsen-io/maelstrom/demo/go"
 )
@@ -11,7 +11,9 @@ import (
 func main() {
 	n := maelstrom.NewNode()
 
-	messages := list.New()
+	messages := make([]int, 0)
+
+	var mu sync.RWMutex
 
 	n.Handle("broadcast", func(msg maelstrom.Message) error {
 		var body map[string]any
@@ -19,9 +21,11 @@ func main() {
 			return err
 		}
 
-		message := body["message"].(int)
+		message := int(body["message"].(float64))
 
-		messages.PushBack(message)
+		mu.Lock()
+		messages = append(messages, message)
+		mu.Unlock()
 
 		res := map[string]any{
 			"type": "broadcast_ok",
@@ -31,17 +35,18 @@ func main() {
 	})
 
 	n.Handle("read", func(msg maelstrom.Message) error {
-		jsonMessages, _ := json.Marshal(messages)
+		mu.RLock()
+		defer mu.RUnlock()
 
 		res := map[string]any{
 			"type":     "read_ok",
-			"messages": jsonMessages,
+			"messages": messages,
 		}
 
 		return n.Reply(msg, res)
 	})
 
-	n.Handle("topology_ok", func(msg maelstrom.Message) error {
+	n.Handle("topology", func(msg maelstrom.Message) error {
 		res := map[string]any{
 			"type": "topology_ok",
 		}
