@@ -36,4 +36,13 @@ After finishing, I collected and refactored all the ID generation logic into a s
 
 ### 3a. Single-Node Broadcast
 
-A bit easier than Unique ID Generation. Simply store all incoming messages in a `int` slice, then send them out upon request. Remember to use a mutex to lock edits to the messages!
+A bit easier than "Unique ID Generation". Simply store all incoming messages in a `int` slice, then send them out upon request. Remember to use a mutex to lock edits to the messages!
+
+### 3b. Multi-Node Broadcast
+
+Significantly harder than "Single-Node Broadcast". The main challenge was preventing "infinite broadcast cycles", where nodes would broadcast the same message back and forth. To prevent this, I stored the messages in a `map[uint64]int` instead, where the key is a unique ID (shoutout "Unique ID Generation"!) and value is the actual message. When a node receives a message, it first checks if it has seen its ID, and only proceeds if not.
+
+#### Design decisions
+
+- I used a map instead of a set, because the keys of the map allow us to uniquely identify messages, allowing things like duplicate messages!
+- If the messages were larger, nodes could proactively "probe" their sendees to check if they've already received the message, potentially reducing the amount of data sent over a network.
