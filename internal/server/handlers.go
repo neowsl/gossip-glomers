@@ -75,11 +75,11 @@ func (s *Server) handleBroadcast(msg maelstrom.Message) error {
 
 	s.mu.Lock()
 	s.messages[newMsg.Snowflake] = newMsg
+	s.mu.Unlock()
 
 	for _, n := range s.adj {
 		s.outgoing[n] <- newMsg
 	}
-	s.mu.Unlock()
 
 	return s.n.Reply(msg, map[string]any{
 		"type": "broadcast_ok",
@@ -110,21 +110,21 @@ func (s *Server) handleGossip(msg maelstrom.Message) error {
 	s.mu.Unlock()
 
 	// stop gossip chain if no new messages
-	if len(newMsgs) == 0 {
-		return nil
-	}
+	if len(newMsgs) > 0 {
+		for _, m := range newMsgs {
+			for _, n := range neighbours {
+				if n == m.Src {
+					continue
+				}
 
-	for _, m := range newMsgs {
-		for _, n := range neighbours {
-			if n == m.Src {
-				continue
+				s.outgoing[n] <- m
 			}
-
-			s.outgoing[n] <- m
 		}
 	}
 
-	return nil
+	return s.n.Reply(msg, map[string]any{
+		"type": "gossip_ok",
+	})
 }
 
 // handleRead responds with all of this node's local messages.

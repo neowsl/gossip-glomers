@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 
 const (
 	MessagesPerBatch = 10
-	MaxBackoff       = 5000
+	MaxBackoff       = 5 * time.Second
 )
 
 // Server provides a central structure and utility functions for communications.
@@ -65,24 +66,31 @@ func (s *Server) spawnNeighbourWorker(dest string, ch chan Message) {
 		}
 
 	send:
-		backoff := 100
 		for {
-			// RPC will error if message was not received (i.e. we will get an
-			// ACK if message was received).
-			err := s.n.RPC(dest, map[string]any{
-				"type":     "gossip",
-				"messages": batch,
-			}, func(reply maelstrom.Message) error {
-				return nil
-			})
+			// exponential backoff
+			backoff := 100 * time.Millisecond
+			// some black magic to prevent memory leaks from `defer cancel()`
+			success := func() bool {
+				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+				defer cancel()
 
-			if err == nil {
+				// SyncRPC will error if message was not received (i.e. we will get an
+				// ACK if message was received).
+				_, err := s.n.SyncRPC(ctx, dest, map[string]any{
+					"type":     "gossip",
+					"messages": batch,
+				})
+
+				return err == nil
+			}()
+
+			if success {
 				// success, move onto next batch of messages in channel
 				break
 			}
 
-			time.Sleep(time.Duration(backoff) * time.Millisecond)
-			// wait twice as long to prevent "stampeding herd"
+			time.Sleep(backoff)
+			// double backoff to prevent "stampeding"
 			backoff = min(MaxBackoff, backoff*2)
 		}
 	}
