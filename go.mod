@@ -1,4 +1,4 @@
-module maelstrom-broadcast
+module gossip-glomers
 
 go 1.25.7
 
