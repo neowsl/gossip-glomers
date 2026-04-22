@@ -12,19 +12,8 @@ type Server struct {
 	n        *maelstrom.Node
 	mu       sync.RWMutex
 	sg       *snowflake.SnowflakeGen
-	messages map[uint64]int
+	messages map[uint64]Message
 	adj      []string
-}
-
-type TopologyBody struct {
-	Type     string              `json:"type"`
-	Topology map[string][]string `json:"topology"`
-}
-
-type BroadcastBody struct {
-	Type    string `json:"type"`
-	Message int    `json:"message"`
-	Id      *int64 `json:"id,omitempty"`
 }
 
 // NewServer creates a new instance of a server, requesting a new Maelstrom node
@@ -32,7 +21,7 @@ type BroadcastBody struct {
 func NewServer() *Server {
 	s := Server{
 		n:        maelstrom.NewNode(),
-		messages: make(map[uint64]int, 0),
+		messages: make(map[uint64]Message, 0),
 	}
 
 	s.n.Handle("init", s.handleInit)
@@ -40,7 +29,7 @@ func NewServer() *Server {
 	s.n.Handle("echo", s.handleEcho)
 	s.n.Handle("generate", s.handleGenerate)
 	s.n.Handle("broadcast", s.handleBroadcast)
-	s.n.Handle("broadcast_ok", s.handleBroadcastOk)
+	s.n.Handle("gossip", s.handleGossip)
 	s.n.Handle("read", s.handleRead)
 
 	return &s

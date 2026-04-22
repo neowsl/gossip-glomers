@@ -46,3 +46,4 @@ Significantly harder than "Single-Node Broadcast". The main challenge was preven
 
 - I used a map instead of a set, because the keys of the map allow us to uniquely identify messages, allowing things like duplicate messages!
 - If the messages were larger, nodes could proactively "probe" their sendees to check if they've already received the message, potentially reducing the amount of data sent over a network.
+- I learned that the unique IDs (snowflakes) enforce a concept known as **idempotency**, where duplicate operations only produce one result :)

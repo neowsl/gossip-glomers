@@ -7,6 +7,8 @@ import (
 	"gossip-glomers/internal/snowflake"
 )
 
+// handleInit should be invoked when the node first becomes online, allowing for
+// seeding of this server's snowflakes.
 func (s *Server) handleInit(msg maelstrom.Message) error {
 	s.mu.Lock()
 	s.sg = snowflake.NewSnowflakeGen(s.n.ID())
@@ -15,6 +17,8 @@ func (s *Server) handleInit(msg maelstrom.Message) error {
 	return nil
 }
 
+// handleTopology parses and initialises the network's topology (which nodes
+// neighbour each other).
 func (s *Server) handleTopology(msg maelstrom.Message) error {
 	var body TopologyBody
 	if err := json.Unmarshal(msg.Body, &body); err != nil {
@@ -30,6 +34,7 @@ func (s *Server) handleTopology(msg maelstrom.Message) error {
 	})
 }
 
+// handleEcho responds with a message of the same body and of type "echo_ok".
 func (s *Server) handleEcho(msg maelstrom.Message) error {
 	var body map[string]any
 	if err := json.Unmarshal(msg.Body, &body); err != nil {
@@ -41,6 +46,7 @@ func (s *Server) handleEcho(msg maelstrom.Message) error {
 	return s.n.Reply(msg, body)
 }
 
+// handleGenerate responds with a unique ID, which is a uint64.
 func (s *Server) handleGenerate(msg maelstrom.Message) error {
 	return s.n.Reply(msg, map[string]any{
 		"type": "generate_ok",
@@ -48,40 +54,26 @@ func (s *Server) handleGenerate(msg maelstrom.Message) error {
 	})
 }
 
+// handleBroadcast takes a message and broadcasts it to all neighbouring nodes.
 func (s *Server) handleBroadcast(msg maelstrom.Message) error {
 	var body BroadcastBody
 	if err := json.Unmarshal(msg.Body, &body); err != nil {
 		return err
 	}
 
-	var id uint64
-
-	s.mu.Lock()
-
-	if body.Id != nil {
-		id = uint64(*body.Id)
-		// incoming from other node
-		if _, seen := s.messages[id]; seen {
-			s.mu.Unlock()
-			// prevent infinite cycle if id already seen
-			return s.n.Reply(msg, map[string]any{
-				"type": "broadcast_ok",
-			})
-		}
-	} else {
-		// incoming from external source, so generate new id
-		id = s.sg.NextId()
+	newMessage := Message{
+		Snowflake: s.sg.NextId(),
+		Content:   body.Message,
 	}
 
-	s.messages[id] = body.Message
-
+	s.mu.Lock()
+	s.messages[newMessage.Snowflake] = newMessage
 	s.mu.Unlock()
 
 	for _, n := range s.adj {
 		s.n.Send(n, map[string]any{
-			"type":    "broadcast",
-			"id":      id,
-			"message": body.Message,
+			"type":     "gossip",
+			"messages": []Message{newMessage},
 		})
 	}
 
@@ -90,17 +82,50 @@ func (s *Server) handleBroadcast(msg maelstrom.Message) error {
 	})
 }
 
-// satisfy the handler for "broadcast_ok"
-func (s *Server) handleBroadcastOk(msg maelstrom.Message) error {
+// handleGossip takes a list of messages and relays them to neighbouring nodes.
+func (s *Server) handleGossip(msg maelstrom.Message) error {
+	var body GossipBody
+	if err := json.Unmarshal(msg.Body, &body); err != nil {
+		return err
+	}
+
+	// only send new messages to avoid infinite cycle
+	newMessages := make([]Message, 0, len(body.Messages))
+
+	s.mu.Lock()
+	for _, message := range body.Messages {
+		// prevent infinite cycle if already seen
+		if _, seen := s.messages[message.Snowflake]; seen {
+			continue
+		}
+
+		s.messages[message.Snowflake] = message
+		newMessages = append(newMessages, message)
+	}
+	s.mu.Unlock()
+
+	// stop gossip chain if no new messages
+	if len(newMessages) == 0 {
+		return nil
+	}
+
+	for _, n := range s.adj {
+		s.n.Send(n, map[string]any{
+			"type":     "gossip",
+			"messages": newMessages,
+		})
+	}
+
 	return nil
 }
 
+// handleRead responds with all of this node's local messages.
 func (s *Server) handleRead(msg maelstrom.Message) error {
 	messages := make([]int, 0, len(s.messages))
 
 	s.mu.RLock()
 	for _, message := range s.messages {
-		messages = append(messages, message)
+		messages = append(messages, message.Content)
 	}
 	s.mu.RUnlock()
 
