@@ -100,6 +100,7 @@ func NewServer() *Server {
 		})
 	})
 
+	// satisfy the handler for "broadcast_ok"
 	s.n.Handle("broadcast_ok", func(msg maelstrom.Message) error {
 		return nil
 	})
