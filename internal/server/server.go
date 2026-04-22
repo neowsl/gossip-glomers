@@ -2,9 +2,16 @@ package server
 
 import (
 	"sync"
+	"time"
+
+	"gossip-glomers/internal/snowflake"
 
 	maelstrom "github.com/jepsen-io/maelstrom/demo/go"
-	"gossip-glomers/internal/snowflake"
+)
+
+const (
+	MessagesPerBatch = 10
+	MaxBackoff       = 5000
 )
 
 // Server provides a central structure and utility functions for communications.
@@ -14,6 +21,7 @@ type Server struct {
 	sg       *snowflake.SnowflakeGen
 	messages map[uint64]Message
 	adj      []string
+	outgoing map[string]chan Message
 }
 
 // NewServer creates a new instance of a server, requesting a new Maelstrom node
@@ -22,6 +30,7 @@ func NewServer() *Server {
 	s := Server{
 		n:        maelstrom.NewNode(),
 		messages: make(map[uint64]Message, 0),
+		outgoing: make(map[string]chan Message),
 	}
 
 	s.n.Handle("init", s.handleInit)
@@ -33,6 +42,50 @@ func NewServer() *Server {
 	s.n.Handle("read", s.handleRead)
 
 	return &s
+}
+
+// spawnNeighbourWorker() spawns a new goroutine that consumes messages from
+// `ch` and forwards them to `dest`, waiting until `dest` becomes responsive if
+// it goes offline.
+func (s *Server) spawnNeighbourWorker(dest string, ch chan Message) {
+	for firstMsg := range ch {
+		// batch-send messages to avoid overloading network
+		// prepare batch first, then commit to sending (otherwise data will be
+		// lost)
+		batch := []Message{firstMsg}
+
+		for range MessagesPerBatch - 1 {
+			// select for safe concurrency
+			select {
+			case m := <-ch:
+				batch = append(batch, m)
+			default:
+				goto send
+			}
+		}
+
+	send:
+		backoff := 100
+		for {
+			// RPC will error if message was not received (i.e. we will get an
+			// ACK if message was received).
+			err := s.n.RPC(dest, map[string]any{
+				"type":     "gossip",
+				"messages": batch,
+			}, func(reply maelstrom.Message) error {
+				return nil
+			})
+
+			if err == nil {
+				// success, move onto next batch of messages in channel
+				break
+			}
+
+			time.Sleep(time.Duration(backoff) * time.Millisecond)
+			// wait twice as long to prevent "stampeding herd"
+			backoff = min(MaxBackoff, backoff*2)
+		}
+	}
 }
 
 // Run starts running the server, returning an error if anything fails.

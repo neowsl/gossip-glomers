@@ -27,6 +27,12 @@ func (s *Server) handleTopology(msg maelstrom.Message) error {
 
 	s.mu.Lock()
 	s.adj = body.Topology[s.n.ID()]
+	// initialise all channels and workers so we don't have to do it later
+	for _, n := range s.adj {
+		ch := make(chan Message, 10000)
+		s.outgoing[n] = ch
+		go s.spawnNeighbourWorker(n, ch)
+	}
 	s.mu.Unlock()
 
 	return s.n.Reply(msg, map[string]any{
@@ -61,21 +67,19 @@ func (s *Server) handleBroadcast(msg maelstrom.Message) error {
 		return err
 	}
 
-	newMessage := Message{
+	newMsg := Message{
+		Src:       s.n.ID(),
 		Snowflake: s.sg.NextId(),
 		Content:   body.Message,
 	}
 
 	s.mu.Lock()
-	s.messages[newMessage.Snowflake] = newMessage
-	s.mu.Unlock()
+	s.messages[newMsg.Snowflake] = newMsg
 
 	for _, n := range s.adj {
-		s.n.Send(n, map[string]any{
-			"type":     "gossip",
-			"messages": []Message{newMessage},
-		})
+		s.outgoing[n] <- newMsg
 	}
+	s.mu.Unlock()
 
 	return s.n.Reply(msg, map[string]any{
 		"type": "broadcast_ok",
@@ -90,30 +94,34 @@ func (s *Server) handleGossip(msg maelstrom.Message) error {
 	}
 
 	// only send new messages to avoid infinite cycle
-	newMessages := make([]Message, 0, len(body.Messages))
+	newMsgs := make([]Message, 0, len(body.Messages))
 
 	s.mu.Lock()
-	for _, message := range body.Messages {
+	for _, m := range body.Messages {
 		// prevent infinite cycle if already seen
-		if _, seen := s.messages[message.Snowflake]; seen {
+		if _, seen := s.messages[m.Snowflake]; seen {
 			continue
 		}
 
-		s.messages[message.Snowflake] = message
-		newMessages = append(newMessages, message)
+		s.messages[m.Snowflake] = m
+		newMsgs = append(newMsgs, m)
 	}
+	neighbours := s.adj
 	s.mu.Unlock()
 
 	// stop gossip chain if no new messages
-	if len(newMessages) == 0 {
+	if len(newMsgs) == 0 {
 		return nil
 	}
 
-	for _, n := range s.adj {
-		s.n.Send(n, map[string]any{
-			"type":     "gossip",
-			"messages": newMessages,
-		})
+	for _, m := range newMsgs {
+		for _, n := range neighbours {
+			if n == m.Src {
+				continue
+			}
+
+			s.outgoing[n] <- m
+		}
 	}
 
 	return nil

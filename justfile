@@ -12,3 +12,6 @@ test-single-node-broadcast:
 
 test-multi-node-broadcast:
     maelstrom test -w broadcast --bin ~/go/bin/gossip-glomers --node-count 5 --time-limit 20 --rate 10
+
+test-fault-tolerant-broadcast:
+    maelstrom test -w broadcast --bin ~/go/bin/gossip-glomers --node-count 5 --time-limit 20 --rate 10 --nemesis partition
