@@ -36,7 +36,7 @@ After finishing, I collected and refactored all the ID generation logic into a s
 
 ### 3a. Single-Node Broadcast
 
-A bit easier than "Unique ID Generation". Simply store all incoming messages in a `int` slice, then send them out upon request. Remember to use a mutex to lock edits to the messages!
+A bit easier than "Unique ID Generation". Simply store all incoming messages in a `int` slice, then send them out upon request. Remember to use a **mutex** to lock edits to the messages!
 
 ### 3b. Multi-Node Broadcast
 
@@ -47,3 +47,13 @@ Significantly harder than "Single-Node Broadcast". The main challenge was preven
 - I used a map instead of a set, because the keys of the map allow us to uniquely identify messages, allowing things like duplicate messages!
 - If the messages were larger, nodes could proactively "probe" their sendees to check if they've already received the message, potentially reducing the amount of data sent over a network.
 - I learned that the unique IDs (snowflakes) enforce a concept known as **idempotency**, where duplicate operations only produce one result :)
+
+### 3c. Fault Tolerant Broadcast
+
+Some really interesting problems here! In order to preserve and forward messages after a network partitions and heals, a lot more work has to be done. I got to experience the [Two Generals' Problem](https://www.youtube.com/watch?v=IP-rGJKSZ3s) firsthand!
+
+#### Design decisions
+
+- I implemented an "outgoing" map of neighbouring nodes to Go **channels**. Channels are really nice here because they are essentially concurrency-safe queues. Reminds me of RabbitMQ from a previous internship!
+- To prevent overloading the network, I refactored the prior "gossiping" code to consume a list of messages at once, allowing for outgoing messages to be **batched**.
+- Another cool idea is **exponential backoff**, where each subsequent retry of a `SendRPC` takes exponentially longer. This, combined with a **jitter**, prevents the **thundering herd** problem, where a huge amount of data is sent the moment a network heals.

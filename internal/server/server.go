@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"math/rand"
 	"sync"
 	"time"
 
@@ -92,6 +93,7 @@ func (s *Server) spawnNeighbourWorker(dest string, ch chan Message) {
 			time.Sleep(backoff)
 			// double backoff to prevent "stampeding"
 			backoff = min(MaxBackoff, backoff*2)
+			backoff += time.Duration(rand.Intn(100)) * time.Millisecond
 		}
 	}
 }
