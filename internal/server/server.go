@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	MessagesPerBatch = 10
-	MaxBackoff       = 5 * time.Second
+	MessagesPerBatch = 20
+	MaxBackoff       = 3 * time.Second
 )
 
 // Server provides a central structure and utility functions for communications.
@@ -69,7 +69,7 @@ func (s *Server) spawnNeighbourWorker(dest string, ch chan Message) {
 	send:
 		for {
 			// exponential backoff
-			backoff := 100 * time.Millisecond
+			backoff := 50 * time.Millisecond
 			// some black magic to prevent memory leaks from `defer cancel()`
 			success := func() bool {
 				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
@@ -93,7 +93,7 @@ func (s *Server) spawnNeighbourWorker(dest string, ch chan Message) {
 			time.Sleep(backoff)
 			// double backoff to prevent "stampeding"
 			backoff = min(MaxBackoff, backoff*2)
-			backoff += time.Duration(rand.Intn(100)) * time.Millisecond
+			backoff += time.Duration(rand.Intn(50)) * time.Millisecond
 		}
 	}
 }

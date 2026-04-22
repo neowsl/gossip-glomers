@@ -57,3 +57,12 @@ Some really interesting problems here! In order to preserve and forward messages
 - I implemented an "outgoing" map of neighbouring nodes to Go **channels**. Channels are really nice here because they are essentially concurrency-safe queues. Reminds me of RabbitMQ from a previous internship!
 - To prevent overloading the network, I refactored the prior "gossiping" code to consume a list of messages at once, allowing for outgoing messages to be **batched**.
 - Another cool idea is **exponential backoff**, where each subsequent retry of a `SendRPC` takes exponentially longer. This, combined with a **jitter**, prevents the **thundering herd** problem, where a huge amount of data is sent the moment a network heals.
+
+### 3d/e. Efficient Broadcast
+
+I didn't have to change much since I started with a well-designed system.
+
+Here are the stats:
+- Messages-per-operation: 8.30
+- Median latency: 918ms
+- Maximum latency: 1503ms
