@@ -49,7 +49,7 @@ func NewServer() *Server {
 // spawnNeighbourWorker() spawns a new goroutine that consumes messages from
 // `ch` and forwards them to `dest`, waiting until `dest` becomes responsive if
 // it goes offline.
-func (s *Server) spawnNeighbourWorker(dest string, ch chan Message) {
+func (s *Server) spawnNeighbourWorker(dest string, ch <-chan Message) {
 	for firstMsg := range ch {
 		// batch-send messages to avoid overloading network
 		// prepare batch first, then commit to sending (otherwise data will be
@@ -67,9 +67,9 @@ func (s *Server) spawnNeighbourWorker(dest string, ch chan Message) {
 		}
 
 	send:
+		// exponential backoff
+		backoff := 50 * time.Millisecond
 		for {
-			// exponential backoff
-			backoff := 50 * time.Millisecond
 			// some black magic to prevent memory leaks from `defer cancel()`
 			success := func() bool {
 				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
