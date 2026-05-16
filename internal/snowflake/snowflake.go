@@ -9,9 +9,9 @@ import (
 
 // SnowflakeGen allows for generation of unique IDs.
 // A SnowflakeGen is safe for concurrent use by multiple goroutines.
-// The epoch and nodeId should be set when the node is initialised.
+// The epoch and nodeID should be set when the node is initialised.
 type SnowflakeGen struct {
-	nodeId        uint64
+	nodeID        uint64
 	epoch         int64
 	mu            sync.Mutex
 	lastTimestamp int64
@@ -19,24 +19,24 @@ type SnowflakeGen struct {
 }
 
 // NewSnowflakeGen creates and initialises a new SnowflakeGen with the given
-// nodeId.
-func NewSnowflakeGen(nodeId string) *SnowflakeGen {
-	idStr := strings.TrimPrefix(nodeId, "n")
-	nodeIdUint, _ := strconv.ParseUint(idStr, 10, 64)
+// nodeID.
+func NewSnowflakeGen(nodeID string) *SnowflakeGen {
+	idStr := strings.TrimPrefix(nodeID, "n")
+	nodeIDUint, _ := strconv.ParseUint(idStr, 10, 64)
 
 	epoch := time.Date(2026, time.April, 17, 0, 0, 0, 0, time.UTC)
 	epochMs := epoch.UnixMilli()
 
 	return &SnowflakeGen{
-		nodeId: nodeIdUint,
+		nodeID: nodeIDUint,
 		epoch:  epochMs,
 	}
 }
 
-// NextId returns a 64-bit unique id.
-// NextId is safe to call concurrently with other operations and will block
+// NextID returns a 64-bit unique ID.
+// NextID is safe to call concurrently with other operations and will block
 // until all other operations finish.
-func (sg *SnowflakeGen) NextId() uint64 {
+func (sg *SnowflakeGen) NextID() uint64 {
 	sg.mu.Lock()
 	defer sg.mu.Unlock()
 
@@ -58,5 +58,5 @@ func (sg *SnowflakeGen) NextId() uint64 {
 
 	// bits: |------ 41 ------|-- 10 ---|--- 12 ---|
 	//       | ms since epoch | node id | sequence |
-	return uint64(now-sg.epoch)<<22 | (sg.nodeId&0x3FF)<<12 | sg.sequence
+	return uint64(now-sg.epoch)<<22 | (sg.nodeID&0x3FF)<<12 | sg.sequence
 }

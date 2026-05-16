@@ -14,6 +14,8 @@ import (
 const (
 	MessagesPerBatch = 20
 	MaxBackoff       = 3 * time.Second
+
+	CounterKey = "counter"
 )
 
 // Server provides a central structure and utility functions for communications.
@@ -24,24 +26,32 @@ type Server struct {
 	messages map[uint64]Message
 	adj      []string
 	outgoing map[string]chan Message
+	kv       *maelstrom.KV
 }
 
 // NewServer creates a new instance of a server, requesting a new Maelstrom node
 // in the process. It also initialises handlers for necessary messages.
-func NewServer() *Server {
+func NewServer(challengeID *string) *Server {
+	n := maelstrom.NewNode()
 	s := Server{
-		n:        maelstrom.NewNode(),
-		messages: make(map[uint64]Message, 0),
+		n:        n,
+		messages: make(map[uint64]Message, 1024),
 		outgoing: make(map[string]chan Message),
+		kv:       maelstrom.NewSeqKV(n),
 	}
 
-	s.n.Handle("init", s.handleInit)
-	s.n.Handle("topology", s.handleTopology)
-	s.n.Handle("echo", s.handleEcho)
-	s.n.Handle("generate", s.handleGenerate)
-	s.n.Handle("broadcast", s.handleBroadcast)
-	s.n.Handle("gossip", s.handleGossip)
-	s.n.Handle("read", s.handleRead)
+	n.Handle("init", s.handleInit)
+	n.Handle("topology", s.handleTopology)
+	n.Handle("echo", s.handleEcho)
+	n.Handle("generate", s.handleGenerate)
+	n.Handle("broadcast", s.handleBroadcast)
+	n.Handle("gossip", s.handleGossip)
+	n.Handle("add", s.handleAdd)
+	if (*challengeID)[0] == '3' {
+		n.Handle("read", s.handleRead3)
+	} else {
+		n.Handle("read", s.handleRead4)
+	}
 
 	return &s
 }

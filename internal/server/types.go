@@ -14,3 +14,8 @@ type GossipBody struct {
 	Type     string    `json:"type"`
 	Messages []Message `json:"messages"`
 }
+
+type AddBody struct {
+	Type  string `json:"type"`
+	Delta int    `json:"delta"`
+}

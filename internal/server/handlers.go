@@ -1,10 +1,13 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
+	"strconv"
+
+	"gossip-glomers/internal/snowflake"
 
 	maelstrom "github.com/jepsen-io/maelstrom/demo/go"
-	"gossip-glomers/internal/snowflake"
 )
 
 // handleInit should be invoked when the node first becomes online, allowing for
@@ -56,7 +59,7 @@ func (s *Server) handleEcho(msg maelstrom.Message) error {
 func (s *Server) handleGenerate(msg maelstrom.Message) error {
 	return s.n.Reply(msg, map[string]any{
 		"type": "generate_ok",
-		"id":   s.sg.NextId(),
+		"id":   s.sg.NextID(),
 	})
 }
 
@@ -69,7 +72,7 @@ func (s *Server) handleBroadcast(msg maelstrom.Message) error {
 
 	newMsg := Message{
 		Src:       s.n.ID(),
-		Snowflake: s.sg.NextId(),
+		Snowflake: s.sg.NextID(),
 		Content:   body.Message,
 	}
 
@@ -127,8 +130,31 @@ func (s *Server) handleGossip(msg maelstrom.Message) error {
 	})
 }
 
-// handleRead responds with all of this node's local messages.
-func (s *Server) handleRead(msg maelstrom.Message) error {
+// handleAdd increments the value of the global counter.
+func (s *Server) handleAdd(msg maelstrom.Message) error {
+	var body AddBody
+	if err := json.Unmarshal(msg.Body, &body); err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+
+	// each node writes to a unique key, so no write contention
+	currVal, err := s.kv.ReadInt(ctx, s.n.ID()+"-"+CounterKey)
+	if err != nil {
+		currVal = 0
+	}
+
+	s.kv.Write(ctx, s.n.ID()+"-"+CounterKey, currVal+body.Delta)
+
+	return s.n.Reply(msg, map[string]any{
+		"type": "add_ok",
+	})
+}
+
+// handleRead3 responds with all of this node's local messages
+// (for Challenge #3x).
+func (s *Server) handleRead3(msg maelstrom.Message) error {
 	messages := make([]int, 0, len(s.messages))
 
 	s.mu.RLock()
@@ -140,5 +166,30 @@ func (s *Server) handleRead(msg maelstrom.Message) error {
 	return s.n.Reply(msg, map[string]any{
 		"type":     "read_ok",
 		"messages": messages,
+	})
+}
+
+// handleRead4 responds with the current value of the global counter, guaranteed
+// to be eventually consistent (for Challenge #4).
+func (s *Server) handleRead4(msg maelstrom.Message) error {
+	ctx := context.Background()
+
+	// since the KV store is sequentially consistent, "force" an update by
+	// making a write call
+	barrierKey := strconv.FormatUint(s.sg.NextID(), 10) + "-barrier"
+	s.kv.Write(ctx, barrierKey, 0)
+
+	sum := 0
+	for _, id := range s.n.NodeIDs() {
+		val, err := s.kv.ReadInt(ctx, id+"-"+CounterKey)
+		if err != nil {
+			val = 0
+		}
+		sum += val
+	}
+
+	return s.n.Reply(msg, map[string]any{
+		"type":  "read_ok",
+		"value": sum,
 	})
 }

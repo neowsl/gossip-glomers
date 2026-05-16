@@ -30,7 +30,7 @@ After finishing, I collected and refactored all the ID generation logic into a s
 
 #### Design decisions
 
-- I used the above scheme of bits to mimic Twitter's own standard. However, if we have less mac hines running, we can shrink the size of `node id`, or if less throughput is necessary, we can shrink the size of `sequence`.
+- I used the above scheme of bits to mimic Twitter's own standard. However, if we have less machines running, we can shrink the size of `node id`, or if less throughput is necessary, we can shrink the size of `sequence`.
 - Extra bits are always fun to play with! Perhaps a parity bit for error checking, or a few bits could signify the priority/type of message?
 - Why the line `now <= sg.lastTimestamp`? Time skips can occur, and if `now` is stepped backwards, we could potentially hand out an ID we already used. `<=` lets us avoid this problem.
 
@@ -63,6 +63,21 @@ Some really interesting problems here! In order to preserve and forward messages
 I didn't have to change much since I started with a well-designed system.
 
 Here are the stats:
-- Messages-per-operation: 8.30
-- Median latency: 918ms
+- Messages-per-operation: 8.63
+- Median latency: 890ms
 - Maximum latency: 1503ms
+
+### 4. Grow-Only Counter
+
+I thought this would be an easy challenge. My first approach was to simply add all deltas to a central KV store using a single key. I learned how to use `CompareAndSwap` (**CAS**) to test for the previous value before updates to ensure consistency. I then wrapped the add code into a **retry loop** to update the values while probing for consistency.
+
+However, this approach failed as some nodes returned incorrect values at the end. One way I alleviated this issue was to have each node write to its own key, so that there's no write contention between nodes. Qualitatively, this reduced the likelihood of failing the Jepsen test, but I was occasionally still getting invalid results.
+
+After digging around, I found this [comment by aphyr](https://github.com/jepsen-io/maelstrom/issues/39#issuecomment-1445414521). That's when it clicked - the provided KV store is guaranteed to be **sequentially consistent when observed**. This means that if event B happens after event A in one node's timeline, event B must happen after event A in *every node's timeline*.
+
+So, putting the pieces together: I was seeing incorrect values initially because in the final few seconds, it was possible to read/observe a stale value (because a stale value technically satisfies the "sequentially consistent" guarantee). However, if we perform a "junk" operation (e.g. a write operation to a UUID key), we force the KV store to give us the most recent values on the next observation. And that's the solution!
+
+#### Design decisions
+
+- Every node wrote to its own unique key (based on its ID) to avoid write contention across nodes.
+- A "junk" or "barrier" operation is performed before every read to guarantee the lastest values.

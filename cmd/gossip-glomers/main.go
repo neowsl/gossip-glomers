@@ -1,12 +1,17 @@
 package main
 
 import (
+	"flag"
 	"gossip-glomers/internal/server"
 	"log"
 )
 
 func main() {
-	s := server.NewServer()
+	challengeID := flag.String("challenge", "", "The ID of the current challenge to run (e.g. 3a)")
+
+	flag.Parse()
+
+	s := server.NewServer(challengeID)
 
 	if err := s.Run(); err != nil {
 		log.Fatal(err)
