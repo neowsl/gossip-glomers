@@ -24,7 +24,7 @@ func NewSnowflakeGen(nodeID string) *SnowflakeGen {
 	idStr := strings.TrimPrefix(nodeID, "n")
 	nodeIDUint, _ := strconv.ParseUint(idStr, 10, 64)
 
-	epoch := time.Date(2026, time.April, 17, 0, 0, 0, 0, time.UTC)
+	epoch := time.Date(2026, time.May, 16, 0, 0, 0, 0, time.UTC)
 	epochMs := epoch.UnixMilli()
 
 	return &SnowflakeGen{
