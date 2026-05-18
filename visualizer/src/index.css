@@ -9,3 +9,7 @@
 @theme {
     --font-sans: "JetBrains Mono", sans-serif;
 }
+
+@source inline("text-success");
+@source inline("text-warning");
+@source inline("text-error");
