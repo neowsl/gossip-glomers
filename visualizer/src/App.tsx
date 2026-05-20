@@ -1,5 +1,6 @@
 import type { FC } from "react";
 import SidebarLeft from "./components/SidebarLeft";
+import SidebarRight from "./components/SidebarRight";
 
 const App: FC = () => {
     return (
@@ -10,7 +11,19 @@ const App: FC = () => {
                 className="drawer-toggle"
             />
 
-            <div className="drawer-content">hi</div>
+            <div className="drawer-content">
+                <div className="drawer drawer-end lg:drawer-open">
+                    <input
+                        id="sidebar-right"
+                        type="checkbox"
+                        className="drawer-toggle"
+                    />
+
+                    <div className="drawer-content">hi</div>
+
+                    <SidebarRight />
+                </div>
+            </div>
 
             <SidebarLeft />
         </div>

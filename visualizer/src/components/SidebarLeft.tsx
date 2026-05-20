@@ -7,7 +7,7 @@ import {
     WifiOff,
 } from "lucide-react";
 import type { FC } from "react";
-import { statusColor } from "../utils/colors";
+import { statusColor } from "../lib/utils";
 
 const SidebarLeft: FC = () => {
     const totalMessages = 100;
@@ -24,7 +24,7 @@ const SidebarLeft: FC = () => {
 
             <div className="h-full w-80 border-base-300 border-r p-4">
                 <div className="flex gap-2">
-                    <GitFork className="text-primary" height={32} />
+                    <GitFork className="text-primary" size={32} />
                     <a
                         className="text-center font-bold text-2xl text-primary"
                         href="/"
@@ -91,7 +91,7 @@ const SidebarLeft: FC = () => {
                     <div className="stat">
                         <div className="stat-title flex items-center gap-2 text-lg">
                             <span className="text-secondary">
-                                <Send height={24} />
+                                <Send size={24} />
                             </span>{" "}
                             TOTAL MSG
                         </div>
@@ -106,11 +106,11 @@ const SidebarLeft: FC = () => {
                                 className={`text-${statusColor(networkHealth)}`}
                             >
                                 {networkHealth === 100 ? (
-                                    <Wifi height={24} />
+                                    <Wifi size={24} />
                                 ) : networkHealth >= 50 ? (
-                                    <WifiLow height={24} />
+                                    <WifiLow size={24} />
                                 ) : (
-                                    <WifiOff height={24} />
+                                    <WifiOff size={24} />
                                 )}
                             </span>{" "}
                             NET HEALTH
@@ -140,7 +140,7 @@ const SidebarLeft: FC = () => {
                             <span
                                 className={`text-${statusColor(convergence)}`}
                             >
-                                <GitCompareArrows height={24} />
+                                <GitCompareArrows size={24} />
                             </span>{" "}
                             CONVERGENCE
                         </div>
