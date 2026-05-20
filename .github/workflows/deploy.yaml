@@ -24,13 +24,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Install Bun in the runner environment
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
         with:
-          bun-version: latest # Or specify a precise version if needed
+          bun-version: latest
 
-      # Bun handles caching automatically and installs lightning fast
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
@@ -40,4 +38,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist' # Double check if Bun/Vite outputs to './dist' or './build'
+          path: './dist/public'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
