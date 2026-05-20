@@ -1,6 +1,8 @@
-# Gossip Glomers: Distributed Systems Challenge (Maelstrom/Jepsen)
+# Maelstrom Matrix: Distributed Systems Challenge (Maelstrom/Jepsen)
 
 A self-directed exploration into distributed systems engineering, fault tolerance, and network consistency models using the Fly.io distributed systems test suite. Implemented a custom node architecture in Go capable of handling network partitions, arbitrary latencies, and state reconciliation.
+
+👉 **[Read More About the Gossip Glomers Challenges](https://fly.io/blog/gossip-glomers)**
 
 ## Key Architecture & Core Challenges
 
