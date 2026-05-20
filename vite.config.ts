@@ -5,7 +5,7 @@ import { defineConfig } from "vite";
 
 export default defineConfig(({ command }) => {
 	return {
-		base: command === "build" ? "/gossip-glomers/" : "/",
+		base: command === "build" ? "/maelstrom-matrix/" : "/",
 		plugins: [react(), tailwindcss()],
 		resolve: {
 			alias: {
