@@ -1,4 +1,5 @@
 import type { FC } from "react";
+import { MaelstromCanvas } from "./components/MaelstromCanvas";
 import SidebarLeft from "./components/SidebarLeft";
 import SidebarRight from "./components/SidebarRight";
 
@@ -19,7 +20,9 @@ const App: FC = () => {
                         className="drawer-toggle"
                     />
 
-                    <div className="drawer-content">hi</div>
+                    <div className="drawer-content">
+                        <MaelstromCanvas />
+                    </div>
 
                     <SidebarRight />
                 </div>

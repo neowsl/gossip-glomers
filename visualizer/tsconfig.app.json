@@ -19,7 +19,15 @@
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "erasableSyntaxOnly": true,
-        "noFallthroughCasesInSwitch": true
+        "noFallthroughCasesInSwitch": true,
+
+        // path resolution
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["src/*"],
+            "@components/*": ["src/components/*"],
+            "@lib/*": ["src/lib/*"]
+        }
     },
-    "include": ["src"]
+    "include": ["src", "public/logs"]
 }

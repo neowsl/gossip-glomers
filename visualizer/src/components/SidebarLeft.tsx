@@ -1,3 +1,4 @@
+import { statusColor } from "@lib/utils";
 import {
     GitCompareArrows,
     GitFork,
@@ -7,12 +8,24 @@ import {
     WifiOff,
 } from "lucide-react";
 import type { FC } from "react";
-import { statusColor } from "../lib/utils";
+import { useMaelstromStore } from "@/lib/store";
+import type { ChallengeId } from "@/lib/types";
+
+const CHALLENGES: Record<ChallengeId, string> = {
+    echo: "Echo",
+    "unique-ids": "Unique ID Generation",
+    broadcast: "Fault Tolerant Broadcast",
+    "g-counter": "Grow-Only Counter",
+};
 
 const SidebarLeft: FC = () => {
-    const totalMessages = 100;
-    const networkHealth = 10;
-    const convergence = 100;
+    const {
+        challengeId,
+        totalMessages,
+        networkHealthy,
+        convergence,
+        setChallengeId,
+    } = useMaelstromStore();
 
     return (
         <div className="drawer-side">
@@ -40,26 +53,19 @@ const SidebarLeft: FC = () => {
                 </div>
 
                 <ul className="menu w-full gap-2">
-                    <li>
-                        <button className="outline" type="button">
-                            1. Echo
-                        </button>
-                    </li>
-                    <li>
-                        <button className="outline" type="button">
-                            2. Unique ID Generation
-                        </button>
-                    </li>
-                    <li>
-                        <button className="outline" type="button">
-                            3. Fault Tolerant Broadcast
-                        </button>
-                    </li>
-                    <li>
-                        <button className="outline" type="button">
-                            4. Grow-Only Counter
-                        </button>
-                    </li>
+                    {Object.keys(CHALLENGES).map((id, i) => (
+                        <li key={id}>
+                            <button
+                                className={`outline ${challengeId === id ? "menu-active" : ""}`}
+                                type="button"
+                                onClick={() =>
+                                    setChallengeId(id as ChallengeId)
+                                }
+                            >
+                                {i}. {CHALLENGES[id as ChallengeId]}
+                            </button>
+                        </li>
+                    ))}
                 </ul>
 
                 <div className="divider"></div>
@@ -103,35 +109,23 @@ const SidebarLeft: FC = () => {
                     <div className="stat">
                         <div className="stat-title flex items-center gap-2 text-lg">
                             <span
-                                className={`text-${statusColor(networkHealth)}`}
+                                className={`${networkHealthy ? "text-success" : "text-error"}`}
                             >
-                                {networkHealth === 100 ? (
+                                {networkHealthy ? (
                                     <Wifi size={24} />
-                                ) : networkHealth >= 50 ? (
-                                    <WifiLow size={24} />
                                 ) : (
                                     <WifiOff size={24} />
                                 )}
                             </span>{" "}
-                            NET HEALTH
+                            NETWORK
                         </div>
                         <div
-                            className={`stat-value text-${statusColor(networkHealth)}`}
+                            className={`stat-value ${networkHealthy ? "text-success" : "text-error"}`}
                             style={{
-                                filter: `drop-shadow(0 0 4px var(--color-${statusColor(networkHealth)}))`,
+                                filter: `drop-shadow(0 0 4px var(--color-${networkHealthy ? "success" : "error"}))`,
                             }}
                         >
-                            <span className="countdown">
-                                <span
-                                    style={{
-                                        "--value": networkHealth,
-                                    }}
-                                    aria-live="polite"
-                                >
-                                    {networkHealth}
-                                </span>
-                                %
-                            </span>
+                            {networkHealthy ? "Healthy" : "Partitioned"}
                         </div>
                     </div>
 
