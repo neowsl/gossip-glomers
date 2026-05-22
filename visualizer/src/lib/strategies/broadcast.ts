@@ -67,7 +67,7 @@ export class BroadcastStrategy implements ChallengeStrategy {
         const val = this.getNodeValue(nodeId, engine);
         if (this.totalBroadcasts === 0) return COLORS.INFO;
         if (val >= this.totalBroadcasts) return COLORS.SUCCESS;
-        if (val >= this.totalBroadcasts - 10) return COLORS.WARNING;
+        if (val >= this.totalBroadcasts - 5) return COLORS.WARNING;
         return COLORS.ERROR;
     }
 }

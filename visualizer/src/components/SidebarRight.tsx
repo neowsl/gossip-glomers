@@ -6,38 +6,44 @@ import { useMaelstromStore } from "@/lib/store";
 const SidebarRight: FC = () => {
     const { isPlaying, rawLogs, setPlayback, reset } = useMaelstromStore();
 
+    const getTokenColorClass = (token: string) => {
+        console.log();
+        switch (token) {
+            case ":ok":
+                return "text-success";
+            case ":invoke":
+                return "text-base-content/50";
+            case ":broadcast":
+                return "text-primary font-bold";
+            case ":add":
+                return "text-primary font-bold";
+            case ":nemesis":
+                return "text-error font-bold";
+            case ":info":
+                return "text-info";
+            default:
+                return "text-base-content";
+        }
+    };
+
     const renderHighlightedTokens = (line: string) => {
         if (!line.trim()) return line;
 
-        const parts = line.split(/(\bn\d+\b|:\w+)/g);
+        const tokens = line.split(/(\bn\d+\b|:\w+)/g);
 
-        return parts.map((part, index) => {
-            if (/^n\d+$/.test(part)) {
-                return (
-                    <span key={index} className="font-bold text-primary">
-                        {part}
-                    </span>
-                );
-            }
-            if (part.startsWith(":")) {
-                return (
-                    <span key={index} className="text-base-content">
-                        {part}
-                    </span>
-                );
-            }
-            return part;
+        return tokens.map((token, index) => {
+            if (!token.startsWith(":")) return token;
+            return (
+                <span key={index} className={getTokenColorClass(token)}>
+                    {token}
+                </span>
+            );
         });
     };
 
     const getRowColorClass = (line: string) => {
-        if (line.includes("ok")) return "text-success";
-        if (line.includes("partition") || line.includes("nemesis"))
-            return "text-primary font-semibold";
-        if (line.includes("fail") || line.includes("info"))
-            return "text-primary";
-        if (line.includes("invoke")) return "text-info";
-        return "text-content";
+        if (line.includes("nemesis")) return "text-error font-semibold";
+        return "text-success";
     };
 
     return (

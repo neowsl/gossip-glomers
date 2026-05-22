@@ -10,6 +10,7 @@ export class GCounterStrategy implements ChallengeStrategy {
     public hasSeqKv = true;
 
     private totalQueries = 0;
+    private maxValue = 0;
 
     public processEvent(evt: ParsedEvent, engine: SimulationEngine) {
         const store = useMaelstromStore.getState();
@@ -20,6 +21,7 @@ export class GCounterStrategy implements ChallengeStrategy {
             evt.value !== undefined
         ) {
             engine.nodeValues.set(evt.src, evt.value);
+            this.maxValue = Math.max(this.maxValue, evt.value);
             this.totalQueries++;
         }
 
@@ -45,12 +47,9 @@ export class GCounterStrategy implements ChallengeStrategy {
 
     public getNodeColor(nodeId: string, engine: SimulationEngine) {
         const val = this.getNodeValue(nodeId, engine);
-        const counts = this.workers.map((n) => engine.nodeValues.get(n) || 0);
-        const maxV = Math.max(...counts, 0);
-
-        if (maxV === 0 || val >= maxV) return COLORS.SUCCESS;
-        if (maxV - val <= 5) return COLORS.WARNING;
-
+        if (val === 0) return COLORS.INFO;
+        if (val >= this.maxValue) return COLORS.SUCCESS;
+        if (val >= this.maxValue - 5) return COLORS.WARNING;
         return COLORS.ERROR;
     }
 }

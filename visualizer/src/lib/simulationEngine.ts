@@ -32,15 +32,14 @@ interface Burst {
 const PROTOCOL_COLORS: Record<string, string> = {
     echo: COLORS.CONTENT,
     generate: COLORS.CONTENT,
-    broadcast: COLORS.CONTENT,
+    broadcast: COLORS.PRIMARY,
     read: COLORS.CONTENT,
-    add: COLORS.CONTENT,
-    write: COLORS.CONTENT,
+    add: COLORS.PRIMARY,
     echo_ok: COLORS.SUCCESS,
+    generate_ok: COLORS.SUCCESS,
     broadcast_ok: COLORS.SUCCESS,
     read_ok: COLORS.SUCCESS,
     add_ok: COLORS.SUCCESS,
-    write_ok: COLORS.SUCCESS,
 };
 
 export class SimulationEngine {
@@ -223,13 +222,19 @@ export class SimulationEngine {
             return { x: node.x, y: node.y };
 
         if (!id.startsWith("c")) return null;
+
         const match = id.match(/\d+/);
-        const index = (match ? parseInt(match[0], 10) : 0) + 1;
-        let total = this.nodes.length + 1;
+        const index = match ? parseInt(match[0], 10) : 0;
+
+        let total = this.nodes.length;
         if (this.strategy?.id === "g-counter") total--;
-        const span = this.canvas.width - 60;
+
+        const padding = 64;
+        const innerWidth = this.canvas.width - padding * 2;
+        const fraction = total > 0 ? (index + 0.5) / total : 0.5;
+
         return {
-            x: this.canvas.width / 2 - span / 2 + (index / total) * span,
+            x: padding + fraction * innerWidth,
             y: 16,
         };
     }
@@ -280,8 +285,8 @@ export class SimulationEngine {
 
             if (this.isPartitioned) this.drawPartitionBarriers();
             this.drawLinks();
-            this.drawNodes();
             this.drawPackets(speed);
+            this.drawNodes();
             this.drawBursts(speed);
 
             this.rafId = requestAnimationFrame(draw);

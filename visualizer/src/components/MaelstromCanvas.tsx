@@ -9,6 +9,8 @@ import { GCounterStrategy } from "@/lib/strategies/gCounter";
 import { UniqueIdsStrategy } from "@/lib/strategies/uniqueIds";
 import { statusColor } from "@/lib/utils";
 
+const SECS_PER_CHALLENGE = 20;
+
 export function MaelstromCanvas() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const engineRef = useRef<SimulationEngine | null>(null);
@@ -103,7 +105,9 @@ export function MaelstromCanvas() {
 
         let currentIdx = useMaelstromStore.getState().rawLogs.length;
 
-        const ms = Math.round(50 / speed);
+        const ms = Math.round(
+            (SECS_PER_CHALLENGE * 1000) / (eventsList.length * speed),
+        );
         const timer = setInterval(() => {
             if (currentIdx >= eventsList.length) {
                 setPlayback(false);
