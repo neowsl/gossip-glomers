@@ -159,7 +159,7 @@ export function MaelstromCanvas() {
                                 />
                             </div>
                             <span
-                                className={`w-12 transition-colors duration-300 ${statusColor(convergence)}`}
+                                className={`w-12 transition-colors duration-300 text-${statusColor(convergence)}`}
                             >
                                 {convergence}%
                             </span>
