@@ -6,6 +6,7 @@ import { useMaelstromStore } from "@/lib/store";
 import { BroadcastStrategy } from "@/lib/strategies/broadcast";
 import { EchoStrategy } from "@/lib/strategies/echo";
 import { GCounterStrategy } from "@/lib/strategies/gCounter";
+import { UniqueIdsStrategy } from "@/lib/strategies/uniqueIds";
 import { statusColor } from "@/lib/utils";
 
 export function MaelstromCanvas() {
@@ -70,6 +71,9 @@ export function MaelstromCanvas() {
         switch (challengeId) {
             case "echo":
                 engine.loadChallenge(new EchoStrategy());
+                break;
+            case "unique-ids":
+                engine.loadChallenge(new UniqueIdsStrategy());
                 break;
             case "broadcast":
                 engine.loadChallenge(new BroadcastStrategy());

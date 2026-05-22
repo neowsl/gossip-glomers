@@ -31,6 +31,7 @@ interface Burst {
 
 const PROTOCOL_COLORS: Record<string, string> = {
     echo: COLORS.CONTENT,
+    generate: COLORS.CONTENT,
     broadcast: COLORS.CONTENT,
     read: COLORS.CONTENT,
     add: COLORS.CONTENT,

@@ -4,11 +4,32 @@ import type { FC } from "react";
 import { useMaelstromStore } from "@/lib/store";
 import type { ChallengeId } from "@/lib/types";
 
-const CHALLENGES: Record<ChallengeId, string> = {
-    echo: "Echo",
-    "unique-ids": "Unique ID Generation",
-    broadcast: "Fault Tolerant Broadcast",
-    "g-counter": "Grow-Only Counter",
+interface ChallengeDetails {
+    displayName: string;
+    objective: string;
+}
+
+const CHALLENGES: Record<ChallengeId, ChallengeDetails> = {
+    echo: {
+        displayName: "Echo",
+        objective:
+            "Reflect all messages back to clients. Implement reliable request-response handling and validate the Maelstrom RPC protocol.",
+    },
+    "unique-ids": {
+        displayName: "Unique ID Generation",
+        objective:
+            "Mint globally unique IDs using Snowflake bit-packing: 41-bit timestamp | 10-bit node | 12-bit sequence counter. No coordination needed.",
+    },
+    broadcast: {
+        displayName: "Fault Tolerant Broadcast",
+        objective:
+            "Gossip all received messages to every peer. Survive network partitions using per-neighbor buffered queues with exponential backoff and jitter.",
+    },
+    "g-counter": {
+        displayName: "Grow-Only Counter",
+        objective:
+            "CRDT Grow-Only Counter with sharded seq-kv keys. Nodes own exclusive namespaces, aggregate asynchronously — eliminating CompareAndSwap contention.",
+    },
 };
 
 const SidebarLeft: FC = () => {
@@ -55,7 +76,7 @@ const SidebarLeft: FC = () => {
                                     setChallengeId(id as ChallengeId)
                                 }
                             >
-                                {i}. {CHALLENGES[id as ChallengeId]}
+                                {i}. {CHALLENGES[id as ChallengeId].displayName}
                             </button>
                         </li>
                     ))}
@@ -70,12 +91,7 @@ const SidebarLeft: FC = () => {
                 <div className="flex-col">
                     <div className="card card-border w-full bg-base-300">
                         <div className="card-body p-4">
-                            <p>
-                                Gossip all received messages to every peer.
-                                Survive network partitions using per-neighbor
-                                buffered queues with exponential backoff and
-                                jitter.
-                            </p>
+                            <p>{CHALLENGES[challengeId].objective}</p>
                         </div>
                     </div>
                 </div>
