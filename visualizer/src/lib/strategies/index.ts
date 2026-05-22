@@ -12,5 +12,5 @@ export interface ChallengeStrategy {
 
     getNodeValue(nodeId: string, engine: SimulationEngine): number;
     getNodeColor(nodeId: string, engine: SimulationEngine): string;
-    getDisplayString(nodeId: string, engine: SimulationEngine): string;
+    getDisplayString(nodeId: string, engine: SimulationEngine): string | null;
 }

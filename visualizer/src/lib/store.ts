@@ -46,6 +46,7 @@ export const useMaelstromStore = create<MaelstromState>((set) => ({
             challengeId: id,
             events: parseEvents(rawText),
             convergence: 100,
+            networkHealthy: true,
             totalMessages: 0,
             totalOps: 0,
             rawLogs: [],
@@ -67,3 +68,5 @@ export const useMaelstromStore = create<MaelstromState>((set) => ({
             resetTicket: state.resetTicket + 1,
         })),
 }));
+
+useMaelstromStore.getState().setChallengeId("g-counter");

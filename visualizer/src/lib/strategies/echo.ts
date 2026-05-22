@@ -5,22 +5,18 @@ import { useMaelstromStore } from "../store";
 import type { ChallengeStrategy } from ".";
 
 export class EchoStrategy implements ChallengeStrategy {
-    id = "echo";
-    workers = ["n0"];
-    hasSeqKv = false;
+    public id = "echo";
+    public workers = ["n0"];
+    public hasSeqKv = false;
 
     private totalMessages = 0;
 
-    processEvent(evt: ParsedEvent, engine: SimulationEngine) {
+    public processEvent(evt: ParsedEvent, engine: SimulationEngine) {
         const store = useMaelstromStore.getState();
 
-        if (engine.nodeValues.size === 0) {
-            this.totalMessages = 0;
-        }
-
         if (evt.type === "echo_ok") {
-            this.totalMessages++;
             engine.nodeValues.set("n0", this.totalMessages);
+            this.totalMessages++;
         }
 
         store.updateMetrics({
@@ -30,15 +26,15 @@ export class EchoStrategy implements ChallengeStrategy {
         });
     }
 
-    getNodeValue(nodeId: string, engine: SimulationEngine) {
+    public getNodeValue(nodeId: string, engine: SimulationEngine) {
         return engine.nodeValues.get(nodeId) || 0;
     }
 
-    getDisplayString(nodeId: string, engine: SimulationEngine) {
+    public getDisplayString(nodeId: string, engine: SimulationEngine) {
         return String(this.getNodeValue(nodeId, engine));
     }
 
-    getNodeColor(nodeId: string, engine: SimulationEngine) {
+    public getNodeColor(nodeId: string, engine: SimulationEngine) {
         const val = this.getNodeValue(nodeId, engine);
         return val > 0 ? COLORS.SUCCESS : COLORS.INFO;
     }

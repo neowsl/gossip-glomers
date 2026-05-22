@@ -5,6 +5,7 @@ import { SimulationEngine } from "@/lib/simulationEngine";
 import { useMaelstromStore } from "@/lib/store";
 import { BroadcastStrategy } from "@/lib/strategies/broadcast";
 import { EchoStrategy } from "@/lib/strategies/echo";
+import { GCounterStrategy } from "@/lib/strategies/gCounter";
 import { statusColor } from "@/lib/utils";
 
 export function MaelstromCanvas() {
@@ -72,6 +73,9 @@ export function MaelstromCanvas() {
                 break;
             case "broadcast":
                 engine.loadChallenge(new BroadcastStrategy());
+                break;
+            case "g-counter":
+                engine.loadChallenge(new GCounterStrategy());
                 break;
         }
 

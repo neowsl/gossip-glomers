@@ -156,7 +156,7 @@ export class SimulationEngine {
             this.spawnPacket(evt.src, evt.dest, packetColor);
 
             const srcNode = this.nodes.find((n) => n.id === evt.src);
-            if (srcNode && srcNode.readyToBurst) {
+            if (srcNode?.readyToBurst) {
                 this.spawnBurst(srcNode.id, COLORS.SUCCESS, 32);
                 srcNode.readyToBurst = false;
             }
@@ -224,7 +224,8 @@ export class SimulationEngine {
         if (!id.startsWith("c")) return null;
         const match = id.match(/\d+/);
         const index = (match ? parseInt(match[0], 10) : 0) + 1;
-        const total = this.nodes.length + 1;
+        let total = this.nodes.length + 1;
+        if (this.strategy?.id === "g-counter") total--;
         const span = this.canvas.width - 60;
         return {
             x: this.canvas.width / 2 - span / 2 + (index / total) * span,
@@ -352,14 +353,29 @@ export class SimulationEngine {
             if (!node.x || !node.y) return;
             const r = node.isSeqKv ? 60 : 40;
             const color = node.isSeqKv
-                ? COLORS.INFO
+                ? COLORS.PRIMARY
                 : this.strategy.getNodeColor(node.id, this);
 
             this.ctx.save();
             this.ctx.shadowBlur = 18;
             this.ctx.shadowColor = color;
             this.ctx.beginPath();
-            this.ctx.arc(node.x, node.y, r, 0, Math.PI * 2);
+
+            if (node.isSeqKv) {
+                for (let i = 0; i <= 6; i++) {
+                    const angle = (i * Math.PI) / 3 + Math.PI / 6;
+                    const x = node.x + r * Math.cos(angle);
+                    const y = node.y + r * Math.sin(angle);
+                    if (i === 0) {
+                        this.ctx.moveTo(x, y);
+                    } else {
+                        this.ctx.lineTo(x, y);
+                    }
+                }
+            } else {
+                this.ctx.arc(node.x, node.y, r, 0, Math.PI * 2);
+            }
+
             this.ctx.fillStyle = COLORS.BASE_300;
             this.ctx.fill();
             this.ctx.strokeStyle = color;
