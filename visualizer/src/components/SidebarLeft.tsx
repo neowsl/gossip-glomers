@@ -1,12 +1,5 @@
 import { statusColor } from "@lib/utils";
-import {
-    GitCompareArrows,
-    GitFork,
-    Send,
-    Wifi,
-    WifiLow,
-    WifiOff,
-} from "lucide-react";
+import { GitCompareArrows, GitFork, Send, Wifi, WifiOff } from "lucide-react";
 import type { FC } from "react";
 import { useMaelstromStore } from "@/lib/store";
 import type { ChallengeId } from "@/lib/types";
@@ -46,7 +39,7 @@ const SidebarLeft: FC = () => {
                     </a>
                 </div>
 
-                <div className="divider"></div>
+                <div className="divider" />
 
                 <div className="mb-4 text-center text-lg text-secondary">
                     -- CHALLENGE --
@@ -68,7 +61,7 @@ const SidebarLeft: FC = () => {
                     ))}
                 </ul>
 
-                <div className="divider"></div>
+                <div className="divider" />
 
                 <div className="mb-4 text-center text-lg text-secondary">
                     -- MISSION OBJECTIVE --
@@ -87,7 +80,7 @@ const SidebarLeft: FC = () => {
                     </div>
                 </div>
 
-                <div className="divider"></div>
+                <div className="divider" />
 
                 <div className="mb-4 text-center text-lg text-secondary">
                     -- SYSTEM MONITOR --
@@ -120,7 +113,7 @@ const SidebarLeft: FC = () => {
                             NETWORK
                         </div>
                         <div
-                            className={`stat-value ${networkHealthy ? "text-success" : "text-error"}`}
+                            className={`stat-value ${networkHealthy ? "text-success" : "animate-pulse text-error"}`}
                             style={{
                                 filter: `drop-shadow(0 0 4px var(--color-${networkHealthy ? "success" : "error"}))`,
                             }}

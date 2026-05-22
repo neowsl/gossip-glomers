@@ -1,3 +1,4 @@
+import { COLORS } from "../colors";
 import type { ParsedEvent } from "../parser";
 import type { SimulationEngine } from "../simulationEngine";
 import { useMaelstromStore } from "../store";
@@ -15,14 +16,13 @@ export class BroadcastStrategy implements ChallengeStrategy {
 
         if (engine.nodeValues.size === 0) {
             this.totalBroadcastsReceived = 0;
-            this.workers.forEach((w) => engine.nodeValues.set(w, 0));
+            for (const w of this.workers) {
+                engine.nodeValues.set(w, 0);
+            }
         }
 
-        // 1. Track Total Global Messages (The Ceiling)
-        // If a client broadcasts a new message to any node, increment the global ceiling
         if (evt.type === "broadcast" && evt.message !== undefined) {
             this.totalBroadcastsReceived++;
-            // The receiving node instantly knows about this message
             if (evt.dest.startsWith("n")) {
                 const current = engine.nodeValues.get(evt.dest) || 0;
                 engine.nodeValues.set(
@@ -32,28 +32,21 @@ export class BroadcastStrategy implements ChallengeStrategy {
             }
         }
 
-        // 2. The Illusion of Gossip (The Catch-up)
-        // Since we can't see the gossip wire, we wait for a node to respond to a client read.
-        // The parser passes the array length as `evt.value`. We forcefully update the node's state to match.
         if (
             evt.type === "read_ok" &&
             evt.src.startsWith("n") &&
             evt.value !== undefined
         ) {
             const currentKnown = engine.nodeValues.get(evt.src) || 0;
-            // Never let the count go backwards
             engine.nodeValues.set(evt.src, Math.max(currentKnown, evt.value));
         }
 
-        // 3. Compute Metrics
         const counts = this.workers.map((n) => engine.nodeValues.get(n) || 0);
         const maxCount = Math.max(...counts, 1);
         const minCount = Math.min(...counts);
 
         store.updateMetrics({
-            convergence: engine.isPartitioned
-                ? 0
-                : Math.round((minCount / maxCount) * 100),
+            convergence: Math.round((minCount / maxCount) * 100),
             totalOps: store.totalOps + 1,
             totalMessages: this.totalBroadcastsReceived,
         });
@@ -69,8 +62,9 @@ export class BroadcastStrategy implements ChallengeStrategy {
 
     getNodeColor(nodeId: string, engine: SimulationEngine) {
         const val = this.getNodeValue(nodeId, engine);
-        if (this.totalBroadcastsReceived === 0) return "#00f3ff";
-        if (val >= this.totalBroadcastsReceived) return "#00ff9d";
-        return "#ffb800";
+        if (this.totalBroadcastsReceived === 0) return COLORS.INFO;
+        if (val >= this.totalBroadcastsReceived) return COLORS.SUCCESS;
+        if (val >= this.totalBroadcastsReceived * 0.8) return COLORS.WARNING;
+        return COLORS.ERROR;
     }
 }

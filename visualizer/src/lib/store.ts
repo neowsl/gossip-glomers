@@ -12,6 +12,7 @@ interface MaelstromState {
     rawLogs: string[];
     isPlaying: boolean;
     speed: number;
+    resetTicket: number;
 
     setChallengeId: (id: ChallengeId) => void;
     setPlayback: (isPlaying: boolean) => void;
@@ -31,6 +32,7 @@ export const useMaelstromStore = create<MaelstromState>((set) => ({
     rawLogs: [],
     isPlaying: false,
     speed: 1,
+    resetTicket: 0,
 
     setChallengeId: async (id) => {
         const response = await fetch(
@@ -43,23 +45,25 @@ export const useMaelstromStore = create<MaelstromState>((set) => ({
         set({
             challengeId: id,
             events: parseEvents(rawText),
-            rawLogs: [],
+            convergence: 100,
             totalMessages: 0,
             totalOps: 0,
-            convergence: 100,
+            rawLogs: [],
+            isPlaying: false,
         });
     },
     setPlayback: (isPlaying) => set({ isPlaying }),
     setSpeed: (speed) => set({ speed }),
-    addLog: (log) =>
-        set((state) => ({ rawLogs: [log, ...state.rawLogs].slice(0, 80) })),
+    addLog: (log) => set((state) => ({ rawLogs: [log, ...state.rawLogs] })),
     updateMetrics: (metrics) => set((state) => ({ ...state, ...metrics })),
     reset: () =>
-        set({
-            totalMessages: 0,
-            networkHealthy: true,
+        set((state) => ({
             convergence: 100,
+            networkHealthy: true,
+            totalMessages: 0,
             totalOps: 0,
             rawLogs: [],
-        }),
+            isPlaying: false,
+            resetTicket: state.resetTicket + 1,
+        })),
 }));
