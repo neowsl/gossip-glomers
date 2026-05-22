@@ -35,9 +35,12 @@ export const useMaelstromStore = create<MaelstromState>((set) => ({
     resetTicket: 0,
 
     setChallengeId: async (id) => {
-        const response = await fetch(
-            `${import.meta.env.BASE_URL || "/"}logs/${id}.edn`,
-        );
+        const logFileUrl = new URL(
+            `logs/${id}.edn`,
+            window.location.origin + import.meta.env.BASE_URL,
+        ).href;
+
+        const response = await fetch(logFileUrl);
         if (!response.ok) throw new Error(`Failed to fetch logs for ${id}.`);
 
         const rawText = await response.text();
