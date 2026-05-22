@@ -1,5 +1,12 @@
 import { statusColor } from "@lib/utils";
-import { GitCompareArrows, GitFork, Send, Wifi, WifiOff } from "lucide-react";
+import {
+    ExternalLink,
+    GitCompareArrows,
+    GitFork,
+    Send,
+    Wifi,
+    WifiOff,
+} from "lucide-react";
 import type { FC } from "react";
 import { useMaelstromStore } from "@/lib/store";
 import type { ChallengeId } from "@/lib/types";
@@ -49,7 +56,7 @@ const SidebarLeft: FC = () => {
                 className="drawer-overlay"
             ></label>
 
-            <div className="h-full w-80 border-base-300 border-r p-4">
+            <div className="flex h-full w-80 flex-col border-base-300 border-r p-4">
                 <div className="flex gap-2">
                     <GitFork className="text-primary" size={32} />
                     <a
@@ -167,6 +174,24 @@ const SidebarLeft: FC = () => {
                         </div>
                     </div>
                 </div>
+
+                <div className="flex-1" />
+
+                <footer className="footer px-2 text-base-content">
+                    <aside>
+                        <p>© {new Date().getFullYear()} Neal Wang.</p>
+                        <p>Code licensed under GPLv3.</p>
+                        <a
+                            className="link flex items-center gap-1"
+                            href="https://github.com/neowsl/maelstrom-matrix"
+                            target="_blank"
+                            rel="noopener"
+                        >
+                            <ExternalLink size={16} />
+                            GitHub
+                        </a>
+                    </aside>
+                </footer>
             </div>
         </div>
     );
