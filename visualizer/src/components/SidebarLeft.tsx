@@ -162,9 +162,11 @@ const SidebarLeft: FC = () => {
                         >
                             <span className="countdown">
                                 <span
-                                    style={{
-                                        "--value": convergence,
-                                    }}
+                                    style={
+                                        {
+                                            "--value": convergence,
+                                        } as React.CSSProperties
+                                    }
                                     aria-live="polite"
                                 >
                                     {convergence}
