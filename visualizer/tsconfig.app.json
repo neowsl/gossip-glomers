@@ -22,11 +22,10 @@
         "noFallthroughCasesInSwitch": true,
 
         // path resolution
-        "baseUrl": ".",
         "paths": {
-            "@/*": ["src/*"],
-            "@components/*": ["src/components/*"],
-            "@lib/*": ["src/lib/*"]
+            "@/*": ["./src/*"],
+            "@components/*": ["./src/components/*"],
+            "@lib/*": ["./src/lib/*"]
         }
     },
     "include": ["src", "public/logs"]
