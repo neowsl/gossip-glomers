@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"gossip-glomers/internal/logstore"
 	"gossip-glomers/internal/snowflake"
 
 	maelstrom "github.com/jepsen-io/maelstrom/demo/go"
@@ -27,31 +28,48 @@ type Server struct {
 	adj      []string
 	outgoing map[string]chan Message
 	kv       *maelstrom.KV
+	logStore logstore.LogStore
 }
 
 // NewServer creates a new instance of a server, requesting a new Maelstrom node
 // in the process. It also initialises handlers for necessary messages.
 func NewServer(challengeID *string) *Server {
 	n := maelstrom.NewNode()
+
+	var logStore logstore.LogStore
+	if *challengeID == "5a" {
+		logStore = logstore.NewMemoryLogStore()
+	}
+
 	s := Server{
 		n:        n,
 		messages: make(map[uint64]Message, 1024),
 		outgoing: make(map[string]chan Message),
 		kv:       maelstrom.NewSeqKV(n),
+		logStore: logStore,
 	}
 
+	// challenge 1
 	n.Handle("init", s.handleInit)
 	n.Handle("topology", s.handleTopology)
 	n.Handle("echo", s.handleEcho)
+	// challenge 2
 	n.Handle("generate", s.handleGenerate)
+	// challenge 3
 	n.Handle("broadcast", s.handleBroadcast)
 	n.Handle("gossip", s.handleGossip)
+	// challenge 4
 	n.Handle("add", s.handleAdd)
 	if (*challengeID)[0] == '3' {
 		n.Handle("read", s.handleRead3)
 	} else {
 		n.Handle("read", s.handleRead4)
 	}
+	// challenge 5
+	n.Handle("send", s.handleSend)
+	n.Handle("poll", s.handlePoll)
+	n.Handle("commit_offsets", s.handleCommitOffsets)
+	n.Handle("list_committed_offsets", s.handleListCommittedOffsets)
 
 	return &s
 }

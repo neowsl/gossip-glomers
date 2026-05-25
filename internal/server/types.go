@@ -1,21 +1,43 @@
 package server
 
+type BaseBody struct {
+	Type string `json:"type"`
+}
+
 type TopologyBody struct {
-	Type     string              `json:"type"`
+	BaseBody
 	Topology map[string][]string `json:"topology"`
 }
 
 type BroadcastBody struct {
-	Type    string `json:"type"`
-	Message int    `json:"message"`
+	BaseBody
+	Message int `json:"message"`
 }
 
 type GossipBody struct {
-	Type     string    `json:"type"`
+	BaseBody
 	Messages []Message `json:"messages"`
 }
 
 type AddBody struct {
-	Type  string `json:"type"`
-	Delta int    `json:"delta"`
+	BaseBody
+	Delta int `json:"delta"`
+}
+
+type SendBody struct {
+	BaseBody
+	Key string `json:"key"`
+	Msg int    `json:"msg"`
+}
+
+type PollBody struct {
+	BaseBody
+	Offsets map[string]int `json:"offsets"`
+}
+
+type CommitOffsetsBody = PollBody
+
+type ListCommittedOffsetsBody struct {
+	BaseBody
+	Keys []string `json:"keys"`
 }

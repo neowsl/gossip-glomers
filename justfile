@@ -22,6 +22,9 @@ test-efficient-broadcast-1:
 test-grow-only-counter:
     maelstrom test -w g-counter --bin ~/go/bin/gossip-glomers --rate 100 --time-limit 20 --nemesis partition -- --challenge 4
 
+test-single-node-kafka:
+    maelstrom test -w kafka --bin ~/go/bin/gossip-glomers --node-count 1 --concurrency 2n --time-limit 20 --rate 1000 -- --challenge 5a
+
 serve:
     maelstrom serve
 

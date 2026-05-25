@@ -193,3 +193,62 @@ func (s *Server) handleRead4(msg maelstrom.Message) error {
 		"value": sum,
 	})
 }
+
+// handleSend is a handler that wraps LogStore.Append.
+func (s *Server) handleSend(msg maelstrom.Message) error {
+	var body SendBody
+	if err := json.Unmarshal(msg.Body, &body); err != nil {
+		return err
+	}
+
+	offset, _ := s.logStore.Append(body.Key, body.Msg)
+
+	return s.n.Reply(msg, map[string]any{
+		"type":   "send_ok",
+		"offset": offset,
+	})
+}
+
+// handlePoll is a handler that wraps LogStore.Poll.
+func (s *Server) handlePoll(msg maelstrom.Message) error {
+	var body PollBody
+	if err := json.Unmarshal(msg.Body, &body); err != nil {
+		return err
+	}
+
+	msgs, _ := s.logStore.Poll(body.Offsets)
+
+	return s.n.Reply(msg, map[string]any{
+		"type": "poll_ok",
+		"msgs": msgs,
+	})
+}
+
+// handleCommitOffsets is a handler that wraps LogStore.Commit.
+func (s *Server) handleCommitOffsets(msg maelstrom.Message) error {
+	var body CommitOffsetsBody
+	if err := json.Unmarshal(msg.Body, &body); err != nil {
+		return err
+	}
+
+	s.logStore.Commit(body.Offsets)
+
+	return s.n.Reply(msg, map[string]any{
+		"type": "commit_offsets_ok",
+	})
+}
+
+// handleListCommittedOffsets is a handler that wraps LogStore.ListCommitted.
+func (s *Server) handleListCommittedOffsets(msg maelstrom.Message) error {
+	var body ListCommittedOffsetsBody
+	if err := json.Unmarshal(msg.Body, &body); err != nil {
+		return err
+	}
+
+	offsets, _ := s.logStore.ListCommitted(body.Keys)
+
+	return s.n.Reply(msg, map[string]any{
+		"type":    "list_committed_offsets_ok",
+		"offsets": offsets,
+	})
+}
