@@ -25,6 +25,9 @@ test-grow-only-counter:
 test-single-node-kafka:
     maelstrom test -w kafka --bin ~/go/bin/gossip-glomers --node-count 1 --concurrency 2n --time-limit 20 --rate 1000 -- --challenge 5a
 
+test-multi-node-kafka:
+    maelstrom test -w kafka --bin ~/go/bin/gossip-glomers --node-count 2 --concurrency 2n --time-limit 20 --rate 1000 -- --challenge 5b
+
 serve:
     maelstrom serve
 

@@ -90,3 +90,7 @@ A fairly straightforward challenge. I learned how Go's interface system works!
 
 - I initially thought that "committing" an offset meant that older messages can be deleted. While this is true of services like RabbitMQ, Kafka preserves *all* messages. The offset serves as a "bookmark" for the client rather than the server.
 - I used the **dependency injection** design pattern: `LogStore` is an interface that can have multiple implementations, such as the `MemoryLogStore` for this part of the challenge. Then, by changing the command-line arguments, we can programmatically select which implementation of `LogStore` to use!
+
+### 5b. Multi-Node Kafka-Style Log
+
+Also a fairly simple migration from the `MemoryLogStore` to a `DistributedLogStore` using the `lin-kv` service. Linearisability and sequential consistency are both classified as CP in in the [CAP theorem](https://en.wikipedia.org/wiki/CAP_theorem). However, linearizability guarantees global real-time synchronisation (i.e. no stale reads) at the cost of increased latency.

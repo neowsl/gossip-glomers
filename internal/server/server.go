@@ -37,8 +37,11 @@ func NewServer(challengeID *string) *Server {
 	n := maelstrom.NewNode()
 
 	var logStore logstore.LogStore
-	if *challengeID == "5a" {
+	switch *challengeID {
+	case "5a":
 		logStore = logstore.NewMemoryLogStore()
+	case "5b":
+		logStore = logstore.NewDistributedLogStore(n)
 	}
 
 	s := Server{
