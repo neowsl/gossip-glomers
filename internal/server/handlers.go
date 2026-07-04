@@ -1,9 +1,7 @@
 package server
 
 import (
-	"context"
 	"encoding/json"
-	"strconv"
 
 	"gossip-glomers/internal/snowflake"
 
@@ -137,15 +135,7 @@ func (s *Server) handleAdd(msg maelstrom.Message) error {
 		return err
 	}
 
-	ctx := context.Background()
-
-	// each node writes to a unique key, so no write contention
-	currVal, err := s.kv.ReadInt(ctx, s.n.ID()+"-"+CounterKey)
-	if err != nil {
-		currVal = 0
-	}
-
-	s.kv.Write(ctx, s.n.ID()+"-"+CounterKey, currVal+body.Delta)
+	s.gc.Add(body.Delta)
 
 	return s.n.Reply(msg, map[string]any{
 		"type": "add_ok",
@@ -172,25 +162,9 @@ func (s *Server) handleRead3(msg maelstrom.Message) error {
 // handleRead4 responds with the current value of the global counter, guaranteed
 // to be eventually consistent (for Challenge #4).
 func (s *Server) handleRead4(msg maelstrom.Message) error {
-	ctx := context.Background()
-
-	// since the KV store is sequentially consistent, "force" an update by
-	// making a write call
-	barrierKey := strconv.FormatUint(s.sg.NextID(), 10) + "-barrier"
-	s.kv.Write(ctx, barrierKey, 0)
-
-	sum := 0
-	for _, id := range s.n.NodeIDs() {
-		val, err := s.kv.ReadInt(ctx, id+"-"+CounterKey)
-		if err != nil {
-			val = 0
-		}
-		sum += val
-	}
-
 	return s.n.Reply(msg, map[string]any{
 		"type":  "read_ok",
-		"value": sum,
+		"value": s.gc.Read(),
 	})
 }
 

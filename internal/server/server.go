@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"gossip-glomers/internal/gcounter"
 	"gossip-glomers/internal/logstore"
 	"gossip-glomers/internal/snowflake"
 
@@ -15,8 +16,6 @@ import (
 const (
 	MessagesPerBatch = 20
 	MaxBackoff       = 3 * time.Second
-
-	CounterKey = "counter"
 )
 
 // Server provides a central structure and utility functions for communications.
@@ -27,7 +26,7 @@ type Server struct {
 	messages map[uint64]Message
 	adj      []string
 	outgoing map[string]chan Message
-	kv       *maelstrom.KV
+	gc       gcounter.GCounter
 	logStore logstore.LogStore
 }
 
@@ -48,7 +47,7 @@ func NewServer(challengeID *string) *Server {
 		n:        n,
 		messages: make(map[uint64]Message, 1024),
 		outgoing: make(map[string]chan Message),
-		kv:       maelstrom.NewSeqKV(n),
+		gc:       *gcounter.NewGCounter(n, maelstrom.NewSeqKV(n)),
 		logStore: logStore,
 	}
 
