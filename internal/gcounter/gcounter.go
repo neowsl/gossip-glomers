@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	CounterKey = "counter"
+	CounterPrefix = "counter"
 )
 
 // GCounter is a grow-only counter.
@@ -19,11 +19,11 @@ type GCounter struct {
 	sg *snowflake.SnowflakeGen
 }
 
-// NewGCounter creates a new GCounter with the provided maelstrom store client.
-func NewGCounter(node *maelstrom.Node, kv *maelstrom.KV) *GCounter {
+// NewGCounter creates a new GCounter built on maelstrom's seq-kv.
+func NewGCounter(node *maelstrom.Node) *GCounter {
 	return &GCounter{
 		n:  node,
-		kv: kv,
+		kv: maelstrom.NewSeqKV(node),
 		sg: snowflake.NewSnowflakeGen(node.ID()),
 	}
 }
@@ -33,12 +33,12 @@ func (c *GCounter) Add(delta int) {
 	ctx := context.Background()
 
 	// each node writes to a unique key, so no write contention
-	currVal, err := c.kv.ReadInt(ctx, c.n.ID()+"-"+CounterKey)
+	currVal, err := c.kv.ReadInt(ctx, CounterPrefix+":"+c.n.ID())
 	if err != nil {
 		currVal = 0
 	}
 
-	c.kv.Write(ctx, c.n.ID()+"-"+CounterKey, currVal+delta)
+	c.kv.Write(ctx, CounterPrefix+":"+c.n.ID(), currVal+delta)
 }
 
 // Read returns the current value of the GCounter.
@@ -52,7 +52,7 @@ func (c *GCounter) Read() int {
 
 	sum := 0
 	for _, id := range c.n.NodeIDs() {
-		val, err := c.kv.ReadInt(ctx, id+"-"+CounterKey)
+		val, err := c.kv.ReadInt(ctx, CounterPrefix+":"+id)
 		if err != nil {
 			val = 0
 		}

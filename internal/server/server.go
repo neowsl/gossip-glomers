@@ -27,7 +27,7 @@ type Server struct {
 	adj      []string
 	outgoing map[string]chan Message
 	gc       gcounter.GCounter
-	logStore logstore.LogStore
+	ls       logstore.LogStore
 }
 
 // NewServer creates a new instance of a server, requesting a new Maelstrom node
@@ -35,20 +35,20 @@ type Server struct {
 func NewServer(challengeID *string) *Server {
 	n := maelstrom.NewNode()
 
-	var logStore logstore.LogStore
+	var ls logstore.LogStore
 	switch *challengeID {
 	case "5a":
-		logStore = logstore.NewMemoryLogStore()
+		ls = logstore.NewMemoryLogStore()
 	case "5b":
-		logStore = logstore.NewDistributedLogStore(n)
+		ls = logstore.NewDistributedLogStore(n)
 	}
 
 	s := Server{
 		n:        n,
 		messages: make(map[uint64]Message, 1024),
 		outgoing: make(map[string]chan Message),
-		gc:       *gcounter.NewGCounter(n, maelstrom.NewSeqKV(n)),
-		logStore: logStore,
+		gc:       *gcounter.NewGCounter(n),
+		ls:       ls,
 	}
 
 	// challenge 1

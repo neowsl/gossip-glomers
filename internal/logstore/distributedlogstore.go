@@ -7,6 +7,11 @@ import (
 	maelstrom "github.com/jepsen-io/maelstrom/demo/go"
 )
 
+const (
+	LogPrefix    = "log"
+	OffsetPrefix = "offset"
+)
+
 // DistributedLogStore is a distributed implementation of a LogStore building
 // on maelstrom's lin-kv store.
 type DistributedLogStore struct {
@@ -24,12 +29,12 @@ func NewDistributedLogStore(node *maelstrom.Node) *DistributedLogStore {
 
 // logKey returns a domain-prefixed log key string based on rawKey.
 func (s *DistributedLogStore) logKey(rawKey string) string {
-	return "log:" + rawKey
+	return LogPrefix + ":" + rawKey
 }
 
 // offsetKey returns a domain-prefixed offset key string based on rawKey.
 func (s *DistributedLogStore) offsetKey(rawKey string) string {
-	return "offset:" + rawKey
+	return OffsetPrefix + ":" + rawKey
 }
 
 func (s *DistributedLogStore) Append(key string, msg int) (offset int, err error) {
