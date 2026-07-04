@@ -7,7 +7,6 @@ import type { ChallengeStrategy } from ".";
 export class EchoStrategy implements ChallengeStrategy {
     public id = "echo";
     public workers = ["n0"];
-    public hasSeqKv = false;
 
     private totalMessages = 0;
 
@@ -22,7 +21,6 @@ export class EchoStrategy implements ChallengeStrategy {
         store.updateMetrics({
             totalMessages: this.totalMessages,
             convergence: 100,
-            totalOps: store.totalOps + 1,
         });
     }
 

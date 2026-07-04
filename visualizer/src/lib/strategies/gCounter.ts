@@ -7,7 +7,7 @@ import type { ChallengeStrategy } from ".";
 export class GCounterStrategy implements ChallengeStrategy {
     public id = "g-counter";
     public workers = ["n0", "n1", "n2", "n3", "n4"];
-    public hasSeqKv = true;
+    public service = "seq-kv";
 
     private totalQueries = 0;
     private maxValue = 0;
@@ -31,7 +31,6 @@ export class GCounterStrategy implements ChallengeStrategy {
 
         store.updateMetrics({
             convergence: Math.round((minCount / maxCount) * 100),
-            totalOps: store.totalOps + 1,
             totalMessages: this.totalQueries,
         });
     }
@@ -42,7 +41,7 @@ export class GCounterStrategy implements ChallengeStrategy {
 
     public getDisplayString(nodeId: string, engine: SimulationEngine) {
         if (nodeId === "seq-kv") return null;
-        return String(this.getNodeValue(nodeId, engine));
+        return this.getNodeValue(nodeId, engine).toString();
     }
 
     public getNodeColor(nodeId: string, engine: SimulationEngine) {

@@ -8,7 +8,6 @@ interface MaelstromState {
     totalMessages: number;
     networkHealthy: boolean;
     convergence: number;
-    totalOps: number;
     rawLogs: string[];
     isPlaying: boolean;
     speed: number;
@@ -28,7 +27,6 @@ export const useMaelstromStore = create<MaelstromState>((set) => ({
     convergence: 100,
     networkHealthy: true,
     totalMessages: 0,
-    totalOps: 0,
     rawLogs: [],
     isPlaying: false,
     speed: 1,
@@ -51,7 +49,6 @@ export const useMaelstromStore = create<MaelstromState>((set) => ({
             convergence: 100,
             networkHealthy: true,
             totalMessages: 0,
-            totalOps: 0,
             rawLogs: [],
             isPlaying: false,
         });
@@ -65,7 +62,6 @@ export const useMaelstromStore = create<MaelstromState>((set) => ({
             convergence: 100,
             networkHealthy: true,
             totalMessages: 0,
-            totalOps: 0,
             rawLogs: [],
             isPlaying: false,
             resetTicket: state.resetTicket + 1,

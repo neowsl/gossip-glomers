@@ -35,7 +35,12 @@ const CHALLENGES: Record<ChallengeId, ChallengeDetails> = {
     "g-counter": {
         displayName: "Grow-Only Counter",
         objective:
-            "CRDT Grow-Only Counter with sharded seq-kv keys. Nodes own exclusive namespaces, aggregate asynchronously — eliminating CompareAndSwap contention.",
+            "CRDT Grow-Only Counter with sequential consistency (seq-kv). Nodes own exclusive namespaces, aggregate asynchronously — eliminating service contention.",
+    },
+    "kafka-log": {
+        displayName: "Kafka-Style Log",
+        objective:
+            "Replicate distributed log across multiple nodes with linearizability (lin-kv). Leverage optimistic concurrency to maintain immutable message sequences.",
     },
 };
 

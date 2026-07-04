@@ -6,6 +6,7 @@ import { useMaelstromStore } from "@/lib/store";
 import { BroadcastStrategy } from "@/lib/strategies/broadcast";
 import { EchoStrategy } from "@/lib/strategies/echo";
 import { GCounterStrategy } from "@/lib/strategies/gCounter";
+import { KafkaLogStrategy } from "@/lib/strategies/kafkaLog";
 import { UniqueIdsStrategy } from "@/lib/strategies/uniqueIds";
 import { statusColor } from "@/lib/utils";
 
@@ -82,6 +83,9 @@ export function MaelstromCanvas() {
                 break;
             case "g-counter":
                 engine.loadChallenge(new GCounterStrategy());
+                break;
+            case "kafka-log":
+                engine.loadChallenge(new KafkaLogStrategy());
                 break;
         }
 

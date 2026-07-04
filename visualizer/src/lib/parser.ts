@@ -38,12 +38,24 @@ export interface GCounterEvent extends BaseEvent {
     value?: number;
 }
 
+export interface KafkaLogEvent extends BaseEvent {
+    type:
+        | "send"
+        | "send_ok"
+        | "poll"
+        | "poll_ok"
+        | "assign"
+        | "assign_ok"
+        | "crash";
+}
+
 export type ParsedEvent =
     | NemesisEvent
     | EchoEvent
     | UniqueIdEvent
     | BroadcastEvent
-    | GCounterEvent;
+    | GCounterEvent
+    | KafkaLogEvent;
 
 export const parseEvents = (rawText: string) => {
     const lines = rawText.split("\n");
@@ -123,7 +135,9 @@ const parseJepsenLine = (
 
     const isInvoke = opType === ":invoke";
     const isOk = opType === ":ok";
-    if (!isInvoke && !isOk) return null;
+    const isInfo = opType === ":info";
+
+    if (!isInvoke && !isOk && !isInfo) return null;
 
     const nodeId = `n${processId % numNodes}`;
     const clientId = `c${processId}`;
@@ -231,7 +245,6 @@ const mapJepsenFunctionToEvent = (
             if (isInvoke) {
                 return { ...base, type: "read" };
             } else {
-                // broadcast: value is EDN vector  [0 3 1]
                 if (value.startsWith("[")) {
                     const msgs = value
                         .slice(1, -1)
@@ -246,15 +259,15 @@ const mapJepsenFunctionToEvent = (
                         value: msgs.length,
                     };
                 }
-                // g-counter: value is an integer
                 const numVal = parseFloat(value);
                 return {
                     ...base,
                     type: "read_ok",
-                    value: isNaN(numVal) ? 0 : numVal, // Only return the count
+                    value: isNaN(numVal) ? 0 : numVal,
                 };
             }
         }
+
         case "add":
             if (isInvoke) {
                 const delta = parseInt(value, 10);
@@ -267,7 +280,7 @@ const mapJepsenFunctionToEvent = (
             return { ...base, type: "add_ok" };
 
         default:
-            return null;
+            return { ...base, type: fn };
     }
 };
 

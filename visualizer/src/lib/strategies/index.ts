@@ -6,7 +6,7 @@ export { BroadcastStrategy } from "./broadcast";
 export interface ChallengeStrategy {
     id: string;
     workers: string[];
-    hasSeqKv: boolean;
+    service?: string;
 
     processEvent(evt: ParsedEvent, engine: SimulationEngine): void;
 

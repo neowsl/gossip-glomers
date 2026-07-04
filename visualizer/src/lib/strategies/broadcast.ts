@@ -18,7 +18,6 @@ export class BroadcastStrategy implements ChallengeStrategy {
         "n8",
         "n9",
     ];
-    public hasSeqKv = false;
 
     private totalBroadcasts = 0;
 
@@ -50,7 +49,6 @@ export class BroadcastStrategy implements ChallengeStrategy {
 
         store.updateMetrics({
             convergence: Math.round((minCount / maxCount) * 100),
-            totalOps: store.totalOps + 1,
             totalMessages: this.totalBroadcasts,
         });
     }

@@ -94,3 +94,7 @@ A fairly straightforward challenge. I learned how Go's interface system works!
 ### 5b. Multi-Node Kafka-Style Log
 
 Also a fairly simple migration from the `MemoryLogStore` to a `DistributedLogStore` using the `lin-kv` service. Linearisability and sequential consistency are both classified as CP in in the [CAP theorem](https://en.wikipedia.org/wiki/CAP_theorem). However, linearizability guarantees global real-time synchronisation (i.e. no stale reads) at the cost of increased latency.
+
+#### Design decisions
+
+- I used **disjoint domain prefixing** to prevent collisions between log and offset keys, resulting in a **66x** improvement in throughput (mainly since the original solution was chopped).

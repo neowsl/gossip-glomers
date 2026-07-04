@@ -8,7 +8,8 @@ import { hexToRgba } from "./utils";
 
 export interface NodeDatum extends d3.SimulationNodeDatum {
     id: string;
-    isSeqKv?: boolean;
+    service?: string;
+    down: boolean;
     readyToBurst?: boolean;
 }
 export interface LinkDatum extends d3.SimulationLinkDatum<NodeDatum> {
@@ -35,11 +36,18 @@ const PROTOCOL_COLORS: Record<string, string> = {
     broadcast: COLORS.PRIMARY,
     read: COLORS.CONTENT,
     add: COLORS.PRIMARY,
+    send: COLORS.PRIMARY,
+    poll: COLORS.CONTENT,
+    assign: COLORS.SECONDARY,
+
     echo_ok: COLORS.SUCCESS,
     generate_ok: COLORS.SUCCESS,
     broadcast_ok: COLORS.SUCCESS,
     read_ok: COLORS.SUCCESS,
     add_ok: COLORS.SUCCESS,
+    send_ok: COLORS.SUCCESS,
+    poll_ok: COLORS.SUCCESS,
+    assign_ok: COLORS.SUCCESS,
 };
 
 export class SimulationEngine {
@@ -105,6 +113,7 @@ export class SimulationEngine {
                 (2 * Math.PI * i) / this.strategy!.workers.length - Math.PI / 2;
             return {
                 id,
+                down: false,
                 x: cx + orbit * Math.cos(a),
                 y: cy + orbit * Math.sin(a),
                 vx: 0,
@@ -112,10 +121,11 @@ export class SimulationEngine {
             };
         });
 
-        if (this.strategy.hasSeqKv) {
+        if (this.strategy.service) {
             this.nodes.push({
-                id: "seq-kv",
-                isSeqKv: true,
+                id: this.strategy.service,
+                service: this.strategy.service,
+                down: false,
                 x: cx,
                 y: cy,
                 fx: cx,
@@ -148,6 +158,15 @@ export class SimulationEngine {
     public processEvent(evt: ParsedEvent) {
         if (evt.type === "nemesis") {
             this.handleNemesis(evt);
+            return;
+        }
+
+        if (evt.type === "crash") {
+            this.spawnBurst(evt.dest, COLORS.ERROR, 64);
+            const node = this.nodes.find((n) => n.id === evt.src);
+            if (node) {
+                node.down = !node.down;
+            }
             return;
         }
 
@@ -227,7 +246,8 @@ export class SimulationEngine {
         const index = match ? parseInt(match[0], 10) : 0;
 
         let total = this.nodes.length;
-        if (this.strategy?.id === "g-counter") total--;
+        if (["g-counter", "kafka-log"].includes(this.strategy?.id ?? ""))
+            total--;
 
         const padding = 64;
         const innerWidth = this.canvas.width - padding * 2;
@@ -267,7 +287,7 @@ export class SimulationEngine {
             store.updateMetrics({ networkHealthy: true });
 
             for (const n of this.nodes) {
-                if (!n.isSeqKv) {
+                if (!n.service) {
                     n.readyToBurst = true;
                 }
             }
@@ -357,17 +377,17 @@ export class SimulationEngine {
 
         for (const node of this.nodes) {
             if (!node.x || !node.y) return;
-            const r = node.isSeqKv ? 60 : 40;
-            const color = node.isSeqKv
+            const r = node.service ? 60 : 40;
+            const color = node.service
                 ? COLORS.PRIMARY
                 : this.strategy.getNodeColor(node.id, this);
 
             this.ctx.save();
             this.ctx.shadowBlur = 18;
-            this.ctx.shadowColor = color;
+            this.ctx.shadowColor = node.down ? COLORS.ERROR : color;
             this.ctx.beginPath();
 
-            if (node.isSeqKv) {
+            if (node.service) {
                 for (let i = 0; i <= 6; i++) {
                     const angle = (i * Math.PI) / 3 + Math.PI / 6;
                     const x = node.x + r * Math.cos(angle);
@@ -384,12 +404,12 @@ export class SimulationEngine {
 
             this.ctx.fillStyle = COLORS.BASE_300;
             this.ctx.fill();
-            this.ctx.strokeStyle = color;
+            this.ctx.strokeStyle = node.down ? COLORS.ERROR : color;
             this.ctx.lineWidth = 2;
             this.ctx.stroke();
 
             this.ctx.shadowBlur = 0;
-            this.ctx.fillStyle = color;
+            this.ctx.fillStyle = node.down ? COLORS.ERROR : color;
             this.ctx.font = "bold 16px 'JetBrains Mono',monospace";
             this.ctx.textAlign = "center";
             this.ctx.textBaseline = "middle";

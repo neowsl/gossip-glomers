@@ -10,24 +10,38 @@ import (
 // DistributedLogStore is a distributed implementation of a LogStore building
 // on maelstrom's lin-kv store.
 type DistributedLogStore struct {
-	logs    *maelstrom.KV
-	offsets *maelstrom.KV
+	kv *maelstrom.KV
 }
 
 // NewDistributedLogStore creates a new empty DistributedLogStore.
 func NewDistributedLogStore(node *maelstrom.Node) *DistributedLogStore {
 	return &DistributedLogStore{
-		logs:    maelstrom.NewLinKV(node),
-		offsets: maelstrom.NewLinKV(node),
+		// each call to `NewLinKV()` creates a client interface to the same
+		// service; we can't create multiple instances of lin-kv stores.
+		kv: maelstrom.NewLinKV(node),
 	}
+}
+
+// logKey returns a domain-prefixed log key string based on rawKey.
+func (s *DistributedLogStore) logKey(rawKey string) string {
+	return "log:" + rawKey
+}
+
+// offsetKey returns a domain-prefixed offset key string based on rawKey.
+func (s *DistributedLogStore) offsetKey(rawKey string) string {
+	return "offset:" + rawKey
 }
 
 func (s *DistributedLogStore) Append(key string, msg int) (offset int, err error) {
 	ctx := context.Background()
 
+	// use disjoint domain prefixing to ensure log keys don't interfere with
+	// offset keys
+	dbKey := s.logKey(key)
+
 	for {
 		var log []Message
-		err := s.logs.ReadInto(ctx, key, &log)
+		err := s.kv.ReadInto(ctx, dbKey, &log)
 		if err != nil {
 			log = []Message{}
 		}
@@ -42,7 +56,7 @@ func (s *DistributedLogStore) Append(key string, msg int) (offset int, err error
 
 		createIfNotExists := len(log) == 0
 		// CAS works on any serialisable type!
-		err = s.logs.CompareAndSwap(ctx, key, log, newLog, createIfNotExists)
+		err = s.kv.CompareAndSwap(ctx, dbKey, log, newLog, createIfNotExists)
 		if err == nil {
 			return nextOffset, nil
 		}
@@ -54,9 +68,10 @@ func (s *DistributedLogStore) Poll(offsets map[string]int) (msgs map[string][][2
 	res := make(map[string][][2]int)
 
 	for key, offset := range offsets {
+		dbKey := s.logKey(key)
 
 		var log []Message
-		err := s.logs.ReadInto(ctx, key, &log)
+		err := s.kv.ReadInto(ctx, dbKey, &log)
 		if err != nil {
 			log = []Message{}
 		}
@@ -77,7 +92,9 @@ func (s *DistributedLogStore) Commit(offsets map[string]int) error {
 	ctx := context.Background()
 
 	for key, offset := range offsets {
-		err := s.offsets.Write(ctx, key, offset)
+		dbKey := s.offsetKey(key)
+
+		err := s.kv.Write(ctx, dbKey, offset)
 		if err != nil {
 			return err
 		}
@@ -91,7 +108,9 @@ func (s *DistributedLogStore) ListCommitted(keys []string) (offsets map[string]i
 	res := make(map[string]int)
 
 	for _, key := range keys {
-		res[key], err = s.offsets.ReadInt(ctx, key)
+		dbKey := s.offsetKey(key)
+
+		res[key], err = s.kv.ReadInt(ctx, dbKey)
 		if err != nil {
 			res[key] = 0
 		}

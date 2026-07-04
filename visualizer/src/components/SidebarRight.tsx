@@ -7,7 +7,6 @@ const SidebarRight: FC = () => {
     const { isPlaying, rawLogs, setPlayback, reset } = useMaelstromStore();
 
     const getTokenColorClass = (token: string) => {
-        console.log();
         switch (token) {
             case ":ok":
                 return "text-success";
