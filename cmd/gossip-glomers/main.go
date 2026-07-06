@@ -11,7 +11,7 @@ func main() {
 
 	flag.Parse()
 
-	s := server.NewServer(challengeID)
+	s := server.InitServer(challengeID)
 
 	if err := s.Run(); err != nil {
 		log.Fatal(err)

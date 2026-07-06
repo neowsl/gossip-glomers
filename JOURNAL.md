@@ -98,3 +98,7 @@ Also a fairly simple migration from the `MemoryLogStore` to a `DistributedLogSto
 #### Design decisions
 
 - I used **disjoint domain prefixing** to prevent collisions between log and offset keys, resulting in a **66x** improvement in throughput (mainly since the original solution was chopped).
+
+---
+
+♻️ Since the upcoming challenges are beginning to get very tricky, it was at this point when I refactored the underlying server architecture. I split the individual services and handlers into separate files and used a **routing table** to string everything together. This decoupled the services, allowing for higher **orthagonality** in my code. The old architecture can be found on [this commit](https://github.com/neowsl/maelstrom-matrix/tree/df03d59afb5f886ddd2921cdc2070343c70ac8b1).
