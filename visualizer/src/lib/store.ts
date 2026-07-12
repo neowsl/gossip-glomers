@@ -67,3 +67,5 @@ export const useMaelstromStore = create<MaelstromState>((set) => ({
             resetTicket: state.resetTicket + 1,
         })),
 }));
+
+useMaelstromStore.getState().setChallengeId("kafka-log");
