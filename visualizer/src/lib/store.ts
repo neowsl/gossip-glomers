@@ -22,7 +22,7 @@ interface MaelstromState {
 }
 
 export const useMaelstromStore = create<MaelstromState>((set) => ({
-    challengeId: "g-counter",
+    challengeId: "kafka-log",
     events: [],
     convergence: 100,
     networkHealthy: true,
@@ -67,5 +67,3 @@ export const useMaelstromStore = create<MaelstromState>((set) => ({
             resetTicket: state.resetTicket + 1,
         })),
 }));
-
-useMaelstromStore.getState().setChallengeId("g-counter");

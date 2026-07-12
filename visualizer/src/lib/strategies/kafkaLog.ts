@@ -6,11 +6,10 @@ import type { ChallengeStrategy } from ".";
 
 export class KafkaLogStrategy implements ChallengeStrategy {
     public id = "kafka-log";
-    public workers = ["n0", "n1", "n2", "n3", "n4", "n5"];
+    public workers = ["n0", "n1", "n2", "n3", "n4", "n5", "n6", "n7", "n8"];
     public service = "lin-kv";
 
-    private totalSends = 0;
-    private totalPolls = 0;
+    private totalMessages = 0;
 
     public processEvent(evt: ParsedEvent, engine: SimulationEngine) {
         const store = useMaelstromStore.getState();
@@ -18,18 +17,20 @@ export class KafkaLogStrategy implements ChallengeStrategy {
         if (evt.type === "send" && evt.src.startsWith("n")) {
             const current = engine.nodeValues.get(evt.src) || 0;
             engine.nodeValues.set(evt.src, current + 1);
-            this.totalSends++;
+            this.totalMessages++;
         }
 
         if (evt.type === "poll" && evt.src.startsWith("n")) {
-            const current = engine.nodeValues.get(evt.src) || 0;
-            engine.nodeValues.set(evt.src, current + 1);
-            this.totalPolls++;
+            console.log(evt.raw);
+            const matches = evt.raw.match(/\[(\d+) (\d+)\]/g);
+            const count = matches ? matches.length : 0;
+            engine.nodeValues.set(evt.src, count);
+            this.totalMessages++;
         }
 
         store.updateMetrics({
             convergence: 100,
-            totalMessages: this.totalSends + this.totalPolls,
+            totalMessages: this.totalMessages,
         });
     }
 

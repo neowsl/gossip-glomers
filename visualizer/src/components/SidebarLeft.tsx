@@ -40,7 +40,7 @@ const CHALLENGES: Record<ChallengeId, ChallengeDetails> = {
     "kafka-log": {
         displayName: "Kafka-Style Log",
         objective:
-            "Replicate distributed log across multiple nodes with linearizability (lin-kv). Leverage optimistic concurrency to maintain immutable message sequences.",
+            "Partition log ownership across nodes using hash-based routing. Eliminate lin-kv CAS contention entirely. Use scatter-gather for multi-key operations.",
     },
 };
 

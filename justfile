@@ -39,4 +39,5 @@ gen-logs:
     maelstrom test -w unique-ids --bin ~/go/bin/gossip-glomers --time-limit 10 --rate 1000 --node-count 3 --availability total --nemesis partition -- --challenge 2
     maelstrom test -w broadcast --bin ~/go/bin/gossip-glomers --node-count 10 --time-limit 10 --rate 20 --nemesis partition -- --challenge 3
     maelstrom test -w g-counter --bin ~/go/bin/gossip-glomers --rate 100 --time-limit 5 --nemesis partition -- --challenge 4
-    maelstrom test -w kafka --bin ~/go/bin/gossip-glomers --node-count 1 --concurrency 6n --time-limit 5 --rate 100 -- --challenge 5a
+    # maelstrom test -w kafka --bin ~/go/bin/gossip-glomers --node-count 1 --concurrency 6n --time-limit 5 --rate 100 -- --challenge 5a
+    maelstrom test -w kafka --bin ~/go/bin/gossip-glomers --node-count 2 --concurrency 2n --time-limit 5 --rate 100 -- --challenge 5c

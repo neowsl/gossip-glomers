@@ -252,7 +252,7 @@ const mapJepsenFunctionToEvent = (
                         .split(/\s+/)
                         .filter(Boolean)
                         .map(Number)
-                        .filter((n) => !isNaN(n));
+                        .filter((n) => !Number.isNaN(n));
                     return {
                         ...base,
                         type: "read_ok",
@@ -263,7 +263,7 @@ const mapJepsenFunctionToEvent = (
                 return {
                     ...base,
                     type: "read_ok",
-                    value: isNaN(numVal) ? 0 : numVal,
+                    value: Number.isNaN(numVal) ? 0 : numVal,
                 };
             }
         }
@@ -280,7 +280,8 @@ const mapJepsenFunctionToEvent = (
             return { ...base, type: "add_ok" };
 
         default:
-            return { ...base, type: fn };
+            // biome-ignore lint/suspicious/noExplicitAny: too difficult to aggregate types
+            return { ...base, type: fn as any };
     }
 };
 
