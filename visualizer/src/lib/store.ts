@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { type ParsedEvent, parseEvents } from "./parser";
 import type { ChallengeId } from "./types";
 
+const INITIAL_CHALLENGE: ChallengeId = "kafka-log";
+
 interface MaelstromState {
     challengeId: ChallengeId;
     events: ParsedEvent[];
@@ -22,7 +24,7 @@ interface MaelstromState {
 }
 
 export const useMaelstromStore = create<MaelstromState>((set) => ({
-    challengeId: "kafka-log",
+    challengeId: INITIAL_CHALLENGE,
     events: [],
     convergence: 100,
     networkHealthy: true,
@@ -68,4 +70,4 @@ export const useMaelstromStore = create<MaelstromState>((set) => ({
         })),
 }));
 
-useMaelstromStore.getState().setChallengeId("kafka-log");
+useMaelstromStore.getState().setChallengeId(INITIAL_CHALLENGE);
