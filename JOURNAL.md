@@ -62,7 +62,8 @@ Some really interesting problems here! In order to preserve and forward messages
 
 I didn't have to change much since I started with a well-designed system.
 
-Here are the stats:
+#### Metrics
+
 - Messages-per-operation: 8.63
 - Median latency: 890ms
 - Maximum latency: 1503ms
@@ -99,6 +100,27 @@ Also a fairly simple migration from the `MemoryLogStore` to a `DistributedLogSto
 
 - I used **disjoint domain prefixing** to prevent collisions between log and offset keys, resulting in a **66x** improvement in throughput (mainly since the original solution was chopped).
 
+#### Metrics
+
+- Messages-per-operation: 4.78
+- Availability: 99.96%
+
 ---
 
 ♻️ Since the upcoming challenges are beginning to get very tricky, it was at this point when I refactored the underlying server architecture. I split the individual services and handlers into separate files and used a **routing table** to string everything together. This decoupled the services, allowing for higher **orthagonality** in my code. The old architecture can be found on [this commit](https://github.com/neowsl/maelstrom-matrix/tree/df03d59afb5f886ddd2921cdc2070343c70ac8b1).
+
+### 5c. Efficient Kafka-Style Log
+
+This challenge was really cool. Looking at the **Lamport diagrams** from 5b, there was a lot of Compare-and-Swap contention, which was overloading the `lin-kv` service.
+
+#### Design decisions
+
+- I **hashed** each key to map it to a specific node, then routed logs to their respective nodes using `SyncRPC`.
+- This **scatter-gather** approach allowed each node to own a set of unique keys, completely eliminating CAS contention and allowing logs to be stored in a `MemoryLogStore`.
+- I would like to explore **partitioning** within a key (e.g. based on timestamp) to distribute load on hot keys.
+- I would also like to explore **consistent hashing** in the future to avoid massive data shifts when nodes are added or dropped.
+
+#### Metrics
+
+- Messages-per-operation: 1.39
+- Availability: 99.96%

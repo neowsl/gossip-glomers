@@ -30,6 +30,10 @@ A self-directed exploration into distributed systems engineering, fault toleranc
 - **Decoupled Architecture:** Utilized Go's structural typing to implement a pluggable `LogStore` interface. Leveraged dependency injection to cleanly switch backends between single-node memory and multi-node distributed storage via command-line flags.
 - **Immutable Log Semantics:** Modeled storage around the distributed log ledger paradigm instead of transient message queues. Treated offset commits as non-destructive consumer bookmarks rather than deletion triggers, ensuring independent consumers can safely poll historic data sequences.
 - **Linearizable Optimistic Concurrency:** Orchestrated multi-node appends using a **Linearizable** storage engine (`lin-kv`) to completely prevent split-brain offset collisions.
+- **Efficient Sharded Log:** Replaced centralized `lin-kv` contention with **key-based hashing**, routing each log key to an authoritative node. Used a **scatter-gather** pattern for fan-out operations (`poll`, `commit`, `list_committed`), eliminating single-point bottlenecks.
+- **Metrics Achieved:**
+  - **Messages-Per-Operation:** 1.39 (vs. 4.78 for the `lin-kv`-backed multi-node log)
+  - **Network Efficiency:** ~3.4× fewer messages per operation through even load distribution
 
 ---
 
