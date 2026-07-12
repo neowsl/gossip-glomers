@@ -25,6 +25,8 @@ type ListCommittedOffsetsBody struct {
 	Keys []string `json:"keys"`
 }
 
+type AppendRerouteBody = SendBody
+
 func InitKafkaService(node *maelstrom.Node, ls LogStore) service.RoutingTable {
 	return service.RoutingTable{
 		"send": func(msg maelstrom.Message) error {

@@ -29,6 +29,8 @@ func InitServer(challengeID *string) *Server {
 		ls = logstore.NewMemoryLogStore()
 	case "5b":
 		ls = logstore.NewDistributedLogStore(n)
+	case "5c":
+		ls = logstore.NewEfficientLogStore(n)
 	}
 
 	routes := make(service.RoutingTable)

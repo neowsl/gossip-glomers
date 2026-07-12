@@ -28,6 +28,9 @@ test-single-node-kafka:
 test-multi-node-kafka:
     maelstrom test -w kafka --bin ~/go/bin/gossip-glomers --node-count 2 --concurrency 2n --time-limit 20 --rate 1000 -- --challenge 5b
 
+test-efficient-kafka:
+    maelstrom test -w kafka --bin ~/go/bin/gossip-glomers --node-count 2 --concurrency 2n --time-limit 20 --rate 1000 -- --challenge 5c
+
 serve:
     maelstrom serve
 
