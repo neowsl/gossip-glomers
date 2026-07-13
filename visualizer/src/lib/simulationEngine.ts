@@ -378,9 +378,12 @@ export class SimulationEngine {
         for (const node of this.nodes) {
             if (!node.x || !node.y) return;
             const r = node.service ? 60 : 40;
-            const color = node.service
+            let color = node.service
                 ? COLORS.PRIMARY
                 : this.strategy.getNodeColor(node.id, this);
+            if (node.service === "lin-kv") {
+                color = COLORS.BASE_100;
+            }
 
             this.ctx.save();
             this.ctx.shadowBlur = 18;

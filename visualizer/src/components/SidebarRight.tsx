@@ -16,6 +16,8 @@ const SidebarRight: FC = () => {
                 return "text-primary font-bold";
             case ":add":
                 return "text-primary font-bold";
+            case ":send":
+                return "text-primary font-bold";
             case ":nemesis":
                 return "text-error font-bold";
             case ":info":
