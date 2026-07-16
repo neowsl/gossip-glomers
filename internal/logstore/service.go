@@ -7,35 +7,35 @@ import (
 	maelstrom "github.com/jepsen-io/maelstrom/demo/go"
 )
 
-type SendBody struct {
+type sendBody struct {
 	service.BaseBody
 	Key string `json:"key"`
 	Msg int    `json:"msg"`
 }
 
-type PollBody struct {
+type pollBody struct {
 	service.BaseBody
 	Offsets map[string]int `json:"offsets"`
 }
 
-type CommitOffsetsBody = PollBody
+type commitOffsetsBody = pollBody
 
-type ListCommittedOffsetsBody struct {
+type listCommittedOffsetsBody struct {
 	service.BaseBody
 	Keys []string `json:"keys"`
 }
 
-type AppendRerouteBody = SendBody
+type appendRerouteBody = sendBody
 
-func InitKafkaService(node *maelstrom.Node, ls LogStore) service.RoutingTable {
-	return service.RoutingTable{
+func Routes(node *maelstrom.Node, store Store) service.Routes {
+	return service.Routes{
 		"send": func(msg maelstrom.Message) error {
-			var body SendBody
+			var body sendBody
 			if err := json.Unmarshal(msg.Body, &body); err != nil {
 				return err
 			}
 
-			offset, _ := ls.Append(body.Key, body.Msg)
+			offset, _ := store.Append(body.Key, body.Msg)
 
 			return node.Reply(msg, map[string]any{
 				"type":   "send_ok",
@@ -43,12 +43,12 @@ func InitKafkaService(node *maelstrom.Node, ls LogStore) service.RoutingTable {
 			})
 		},
 		"poll": func(msg maelstrom.Message) error {
-			var body PollBody
+			var body pollBody
 			if err := json.Unmarshal(msg.Body, &body); err != nil {
 				return err
 			}
 
-			msgs, _ := ls.Poll(body.Offsets)
+			msgs, _ := store.Poll(body.Offsets)
 
 			return node.Reply(msg, map[string]any{
 				"type": "poll_ok",
@@ -56,24 +56,24 @@ func InitKafkaService(node *maelstrom.Node, ls LogStore) service.RoutingTable {
 			})
 		},
 		"commit_offsets": func(msg maelstrom.Message) error {
-			var body CommitOffsetsBody
+			var body commitOffsetsBody
 			if err := json.Unmarshal(msg.Body, &body); err != nil {
 				return err
 			}
 
-			ls.Commit(body.Offsets)
+			store.Commit(body.Offsets)
 
 			return node.Reply(msg, map[string]any{
 				"type": "commit_offsets_ok",
 			})
 		},
 		"list_committed_offsets": func(msg maelstrom.Message) error {
-			var body ListCommittedOffsetsBody
+			var body listCommittedOffsetsBody
 			if err := json.Unmarshal(msg.Body, &body); err != nil {
 				return err
 			}
 
-			offsets, _ := ls.ListCommitted(body.Keys)
+			offsets, _ := store.ListCommitted(body.Keys)
 
 			return node.Reply(msg, map[string]any{
 				"type":    "list_committed_offsets_ok",

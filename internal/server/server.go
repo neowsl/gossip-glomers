@@ -15,51 +15,51 @@ import (
 
 // Server is responsible for orchestrating individual services for challenges.
 type Server struct {
-	n *maelstrom.Node
+	node *maelstrom.Node
 }
 
-// InitServer spins up services based on the challengeID and sets up endpoint
+// New spins up services based on the challengeID and sets up endpoint
 // handlers.
-func InitServer(challengeID *string) *Server {
-	n := maelstrom.NewNode()
+func New(challengeID *string) *Server {
+	node := maelstrom.NewNode()
 
-	var ls logstore.LogStore
+	var store logstore.Store
 	switch *challengeID {
 	case "5a":
-		ls = logstore.NewMemoryLogStore()
+		store = logstore.NewInMemoryStore()
 	case "5b":
-		ls = logstore.NewDistributedLogStore(n)
+		store = logstore.NewLinKVStore(node)
 	case "5c":
-		ls = logstore.NewEfficientLogStore(n)
+		store = logstore.NewShardedStore(node)
 	}
 
-	routes := make(service.RoutingTable)
+	routes := make(service.Routes)
 
 	// append all new routes from init functions
 	switch (*challengeID)[0] {
 	case '1':
-		maps.Copy(routes, echo.InitEchoService(n))
+		maps.Copy(routes, echo.Routes(node))
 	case '2':
-		maps.Copy(routes, snowflake.InitUUIDService(n))
+		maps.Copy(routes, snowflake.Routes(node))
 	case '3':
-		maps.Copy(routes, broadcast.InitBroadcastService(n))
+		maps.Copy(routes, broadcast.Routes(node))
 	case '4':
-		maps.Copy(routes, gcounter.InitGCounterService(n))
+		maps.Copy(routes, gcounter.Routes(node))
 	case '5':
-		maps.Copy(routes, logstore.InitKafkaService(n, ls))
+		maps.Copy(routes, logstore.Routes(node, store))
 	}
 
 	// attach all handlers
 	for endpoint, handler := range routes {
-		n.Handle(endpoint, handler)
+		node.Handle(endpoint, handler)
 	}
 
 	return &Server{
-		n: n,
+		node: node,
 	}
 }
 
 // Run starts running the server, returning an error if anything fails.
 func (s *Server) Run() error {
-	return s.n.Run()
+	return s.node.Run()
 }

@@ -1,7 +1,7 @@
 package logstore
 
-// LogStore is an append-only Kafka-style log store.
-type LogStore interface {
+// Store is an append-only Kafka-style log store.
+type Store interface {
 	// Append inserts a new message to the log of the given key. It returns the
 	// offset of the new message, guaranteed to be greater than any previous
 	// offsets in the log.
@@ -18,8 +18,8 @@ type LogStore interface {
 	ListCommitted(keys []string) (offsets map[string]int, err error)
 }
 
-// Message represents a message that can be sent to / polled from a LogStore
-type Message struct {
+// record represents a message that can be sent to / polled from a Store.
+type record struct {
 	Offset  int
 	Content int
 }

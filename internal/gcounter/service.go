@@ -7,22 +7,22 @@ import (
 	maelstrom "github.com/jepsen-io/maelstrom/demo/go"
 )
 
-type AddBody struct {
+type addBody struct {
 	service.BaseBody
 	Delta int `json:"delta"`
 }
 
-func InitGCounterService(node *maelstrom.Node) service.RoutingTable {
-	gc := NewGCounter(node)
+func Routes(node *maelstrom.Node) service.Routes {
+	counter := NewCounter(node)
 
-	return service.RoutingTable{
+	return service.Routes{
 		"add": func(msg maelstrom.Message) error {
-			var body AddBody
+			var body addBody
 			if err := json.Unmarshal(msg.Body, &body); err != nil {
 				return err
 			}
 
-			gc.Add(body.Delta)
+			counter.Add(body.Delta)
 
 			return node.Reply(msg, map[string]any{
 				"type": "add_ok",
@@ -31,7 +31,7 @@ func InitGCounterService(node *maelstrom.Node) service.RoutingTable {
 		"read": func(msg maelstrom.Message) error {
 			return node.Reply(msg, map[string]any{
 				"type":  "read_ok",
-				"value": gc.Read(),
+				"value": counter.Read(),
 			})
 		},
 	}

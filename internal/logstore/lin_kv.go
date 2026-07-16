@@ -8,19 +8,19 @@ import (
 )
 
 const (
-	LogPrefix    = "log"
-	OffsetPrefix = "offset"
+	logPrefix    = "log"
+	offsetPrefix = "offset"
 )
 
-// DistributedLogStore is a distributed implementation of a LogStore building
-// on maelstrom's lin-kv store.
-type DistributedLogStore struct {
+// LinKVStore is a distributed implementation of a Store building on
+// maelstrom's lin-kv store.
+type LinKVStore struct {
 	kv *maelstrom.KV
 }
 
-// NewDistributedLogStore creates a new empty DistributedLogStore.
-func NewDistributedLogStore(node *maelstrom.Node) *DistributedLogStore {
-	return &DistributedLogStore{
+// NewLinKVStore creates a new empty LinKVStore.
+func NewLinKVStore(node *maelstrom.Node) *LinKVStore {
+	return &LinKVStore{
 		// each call to `NewLinKV()` creates a client interface to the same
 		// service; we can't create multiple instances of lin-kv stores.
 		kv: maelstrom.NewLinKV(node),
@@ -28,16 +28,16 @@ func NewDistributedLogStore(node *maelstrom.Node) *DistributedLogStore {
 }
 
 // logKey returns a domain-prefixed log key string based on rawKey.
-func (s *DistributedLogStore) logKey(rawKey string) string {
-	return LogPrefix + ":" + rawKey
+func (s *LinKVStore) logKey(rawKey string) string {
+	return logPrefix + ":" + rawKey
 }
 
 // offsetKey returns a domain-prefixed offset key string based on rawKey.
-func (s *DistributedLogStore) offsetKey(rawKey string) string {
-	return OffsetPrefix + ":" + rawKey
+func (s *LinKVStore) offsetKey(rawKey string) string {
+	return offsetPrefix + ":" + rawKey
 }
 
-func (s *DistributedLogStore) Append(key string, msg int) (offset int, err error) {
+func (s *LinKVStore) Append(key string, msg int) (offset int, err error) {
 	ctx := context.Background()
 
 	// use disjoint domain prefixing to ensure log keys don't interfere with
@@ -45,10 +45,10 @@ func (s *DistributedLogStore) Append(key string, msg int) (offset int, err error
 	dbKey := s.logKey(key)
 
 	for {
-		var log []Message
+		var log []record
 		err := s.kv.ReadInto(ctx, dbKey, &log)
 		if err != nil {
-			log = []Message{}
+			log = []record{}
 		}
 
 		nextOffset := 0
@@ -57,7 +57,7 @@ func (s *DistributedLogStore) Append(key string, msg int) (offset int, err error
 		}
 
 		newLog := slices.Clone(log)
-		newLog = append(newLog, Message{Offset: nextOffset, Content: msg})
+		newLog = append(newLog, record{Offset: nextOffset, Content: msg})
 
 		createIfNotExists := len(log) == 0
 		// CAS works on any serialisable type!
@@ -68,17 +68,17 @@ func (s *DistributedLogStore) Append(key string, msg int) (offset int, err error
 	}
 }
 
-func (s *DistributedLogStore) Poll(offsets map[string]int) (msgs map[string][][2]int, err error) {
+func (s *LinKVStore) Poll(offsets map[string]int) (msgs map[string][][2]int, err error) {
 	ctx := context.Background()
 	res := make(map[string][][2]int)
 
 	for key, offset := range offsets {
 		dbKey := s.logKey(key)
 
-		var log []Message
+		var log []record
 		err := s.kv.ReadInto(ctx, dbKey, &log)
 		if err != nil {
-			log = []Message{}
+			log = []record{}
 		}
 
 		for _, m := range log {
@@ -93,7 +93,7 @@ func (s *DistributedLogStore) Poll(offsets map[string]int) (msgs map[string][][2
 	return res, nil
 }
 
-func (s *DistributedLogStore) Commit(offsets map[string]int) error {
+func (s *LinKVStore) Commit(offsets map[string]int) error {
 	ctx := context.Background()
 
 	for key, offset := range offsets {
@@ -108,7 +108,7 @@ func (s *DistributedLogStore) Commit(offsets map[string]int) error {
 	return nil
 }
 
-func (s *DistributedLogStore) ListCommitted(keys []string) (offsets map[string]int, err error) {
+func (s *LinKVStore) ListCommitted(keys []string) (offsets map[string]int, err error) {
 	ctx := context.Background()
 	res := make(map[string]int)
 

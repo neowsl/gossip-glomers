@@ -7,10 +7,10 @@ import (
 	"time"
 )
 
-// SnowflakeGen allows for generation of unique IDs.
-// A SnowflakeGen is safe for concurrent use by multiple goroutines.
+// Generator allows for generation of unique IDs.
+// A Generator is safe for concurrent use by multiple goroutines.
 // The epoch and nodeID should be set when the node is initialised.
-type SnowflakeGen struct {
+type Generator struct {
 	nodeID        uint64
 	epoch         int64
 	mu            sync.Mutex
@@ -18,16 +18,15 @@ type SnowflakeGen struct {
 	sequence      uint64
 }
 
-// NewSnowflakeGen creates and initialises a new SnowflakeGen with the given
-// nodeID.
-func NewSnowflakeGen(nodeID string) *SnowflakeGen {
+// NewGenerator creates and initialises a new Generator with the given nodeID.
+func NewGenerator(nodeID string) *Generator {
 	idStr := strings.TrimPrefix(nodeID, "n")
 	nodeIDUint, _ := strconv.ParseUint(idStr, 10, 64)
 
 	epoch := time.Date(2026, time.July, 6, 0, 0, 0, 0, time.UTC)
 	epochMs := epoch.UnixMilli()
 
-	return &SnowflakeGen{
+	return &Generator{
 		nodeID: nodeIDUint,
 		epoch:  epochMs,
 	}
@@ -36,27 +35,27 @@ func NewSnowflakeGen(nodeID string) *SnowflakeGen {
 // NextID returns a 64-bit unique ID.
 // NextID is safe to call concurrently with other operations and will block
 // until all other operations finish.
-func (sg *SnowflakeGen) NextID() uint64 {
-	sg.mu.Lock()
-	defer sg.mu.Unlock()
+func (g *Generator) NextID() uint64 {
+	g.mu.Lock()
+	defer g.mu.Unlock()
 
 	now := time.Now().UnixMilli()
 
-	if now == sg.lastTimestamp {
-		sg.sequence = (sg.sequence + 1) & 0xFFF
+	if now == g.lastTimestamp {
+		g.sequence = (g.sequence + 1) & 0xFFF
 		// wait for next ms
-		if sg.sequence == 0 {
-			for now <= sg.lastTimestamp {
+		if g.sequence == 0 {
+			for now <= g.lastTimestamp {
 				now = time.Now().UnixMilli()
 			}
 		}
 	} else {
-		sg.sequence = 0
+		g.sequence = 0
 	}
 
-	sg.lastTimestamp = now
+	g.lastTimestamp = now
 
 	// bits: |------ 41 ------|-- 10 ---|--- 12 ---|
 	//       | ms since epoch | node id | sequence |
-	return uint64(now-sg.epoch)<<22 | (sg.nodeID&0x3FF)<<12 | sg.sequence
+	return uint64(now-g.epoch)<<22 | (g.nodeID&0x3FF)<<12 | g.sequence
 }

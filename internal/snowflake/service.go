@@ -6,19 +6,19 @@ import (
 	maelstrom "github.com/jepsen-io/maelstrom/demo/go"
 )
 
-func InitUUIDService(node *maelstrom.Node) service.RoutingTable {
-	var sg *SnowflakeGen
+func Routes(node *maelstrom.Node) service.Routes {
+	var gen *Generator
 
-	return service.RoutingTable{
+	return service.Routes{
 		"init": func(msg maelstrom.Message) error {
-			sg = NewSnowflakeGen(node.ID())
+			gen = NewGenerator(node.ID())
 
 			return nil
 		},
 		"generate": func(msg maelstrom.Message) error {
 			return node.Reply(msg, map[string]any{
 				"type": "generate_ok",
-				"id":   sg.NextID(),
+				"id":   gen.NextID(),
 			})
 		},
 	}

@@ -13,48 +13,48 @@ import (
 )
 
 const (
-	MessagesPerBatch = 20
-	MaxBackoff       = 3 * time.Second
+	messagesPerBatch = 20
+	maxBackoff       = 3 * time.Second
 )
 
-// Message stores details relevant to a message. Each Message is marked by a
+// message stores details relevant to a message. Each message is marked by a
 // unique snowflake.
-type Message struct {
+type message struct {
 	Src       string `json:"src"`
 	Snowflake uint64 `json:"snowflake"`
 	Content   int    `json:"content"`
 }
 
-type TopologyBody struct {
+type topologyBody struct {
 	service.BaseBody
 	Topology map[string][]string `json:"topology"`
 }
 
-type BroadcastBody struct {
+type broadcastBody struct {
 	service.BaseBody
 	Message int `json:"message"`
 }
 
-type GossipBody struct {
+type gossipBody struct {
 	service.BaseBody
-	Messages []Message `json:"messages"`
+	Messages []message `json:"messages"`
 }
 
-func InitBroadcastService(node *maelstrom.Node) service.RoutingTable {
+func Routes(node *maelstrom.Node) service.Routes {
 	var mu sync.RWMutex
-	var sg *snowflake.SnowflakeGen
+	var gen *snowflake.Generator
 	var adj []string
-	messages := make(map[uint64]Message, 1024)
-	outgoing := make(map[string]chan Message)
+	messages := make(map[uint64]message, 1024)
+	outgoing := make(map[string]chan message)
 
-	return service.RoutingTable{
+	return service.Routes{
 		"init": func(msg maelstrom.Message) error {
-			sg = snowflake.NewSnowflakeGen(node.ID())
+			gen = snowflake.NewGenerator(node.ID())
 
 			return nil
 		},
 		"topology": func(msg maelstrom.Message) error {
-			var body TopologyBody
+			var body topologyBody
 			if err := json.Unmarshal(msg.Body, &body); err != nil {
 				return err
 			}
@@ -63,7 +63,7 @@ func InitBroadcastService(node *maelstrom.Node) service.RoutingTable {
 			adj = body.Topology[node.ID()]
 			// initialise all channels and workers so we don't have to do it later
 			for _, n := range adj {
-				ch := make(chan Message, 10000)
+				ch := make(chan message, 10000)
 				outgoing[n] = ch
 				go spawnNeighbourWorker(node, n, ch)
 			}
@@ -74,14 +74,14 @@ func InitBroadcastService(node *maelstrom.Node) service.RoutingTable {
 			})
 		},
 		"broadcast": func(msg maelstrom.Message) error {
-			var body BroadcastBody
+			var body broadcastBody
 			if err := json.Unmarshal(msg.Body, &body); err != nil {
 				return err
 			}
 
-			newMsg := Message{
+			newMsg := message{
 				Src:       node.ID(),
-				Snowflake: sg.NextID(),
+				Snowflake: gen.NextID(),
 				Content:   body.Message,
 			}
 
@@ -98,13 +98,13 @@ func InitBroadcastService(node *maelstrom.Node) service.RoutingTable {
 			})
 		},
 		"gossip": func(msg maelstrom.Message) error {
-			var body GossipBody
+			var body gossipBody
 			if err := json.Unmarshal(msg.Body, &body); err != nil {
 				return err
 			}
 
 			// only send new messages to avoid infinite cycle
-			newMsgs := make([]Message, 0, len(body.Messages))
+			newMsgs := make([]message, 0, len(body.Messages))
 
 			mu.Lock()
 			for _, m := range body.Messages {
@@ -156,14 +156,14 @@ func InitBroadcastService(node *maelstrom.Node) service.RoutingTable {
 // spawnNeighbourWorker() spawns a new goroutine that consumes messages from
 // `ch` and forwards them to `dest`, waiting until `dest` becomes responsive if
 // it goes offline.
-func spawnNeighbourWorker(node *maelstrom.Node, dest string, ch <-chan Message) {
+func spawnNeighbourWorker(node *maelstrom.Node, dest string, ch <-chan message) {
 	for firstMsg := range ch {
 		// batch-send messages to avoid overloading network
 		// prepare batch first, then commit to sending (otherwise data will be
 		// lost)
-		batch := []Message{firstMsg}
+		batch := []message{firstMsg}
 
-		for range MessagesPerBatch - 1 {
+		for range messagesPerBatch - 1 {
 			// select for safe concurrency
 			select {
 			case m := <-ch:
@@ -199,7 +199,7 @@ func spawnNeighbourWorker(node *maelstrom.Node, dest string, ch <-chan Message) 
 
 			time.Sleep(backoff)
 			// double backoff to prevent "stampeding"
-			backoff = min(MaxBackoff, backoff*2)
+			backoff = min(maxBackoff, backoff*2)
 			backoff += time.Duration(rand.Intn(50)) * time.Millisecond
 		}
 	}

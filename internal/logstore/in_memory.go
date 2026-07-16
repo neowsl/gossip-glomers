@@ -4,22 +4,22 @@ import "maps"
 
 import "sync"
 
-// MemoryLogStore is an in-memory implementation of a LogStore
-type MemoryLogStore struct {
+// InMemoryStore is an in-memory implementation of a Store.
+type InMemoryStore struct {
 	mu      sync.RWMutex
-	logs    map[string][]Message
+	logs    map[string][]record
 	offsets map[string]int
 }
 
-// NewMemoryLogStore creates a new empty MemoryLogStore.
-func NewMemoryLogStore() *MemoryLogStore {
-	return &MemoryLogStore{
-		logs:    make(map[string][]Message),
+// NewInMemoryStore creates a new empty InMemoryStore.
+func NewInMemoryStore() *InMemoryStore {
+	return &InMemoryStore{
+		logs:    make(map[string][]record),
 		offsets: make(map[string]int),
 	}
 }
 
-func (s *MemoryLogStore) Append(key string, msg int) (offset int, err error) {
+func (s *InMemoryStore) Append(key string, msg int) (offset int, err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -30,7 +30,7 @@ func (s *MemoryLogStore) Append(key string, msg int) (offset int, err error) {
 		nextOffset = log[len(log)-1].Offset + 1
 	}
 
-	m := Message{
+	m := record{
 		Offset:  nextOffset,
 		Content: msg,
 	}
@@ -40,7 +40,7 @@ func (s *MemoryLogStore) Append(key string, msg int) (offset int, err error) {
 	return nextOffset, nil
 }
 
-func (s *MemoryLogStore) Poll(offsets map[string]int) (msgs map[string][][2]int, err error) {
+func (s *InMemoryStore) Poll(offsets map[string]int) (msgs map[string][][2]int, err error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -59,7 +59,7 @@ func (s *MemoryLogStore) Poll(offsets map[string]int) (msgs map[string][][2]int,
 	return res, nil
 }
 
-func (s *MemoryLogStore) Commit(offsets map[string]int) error {
+func (s *InMemoryStore) Commit(offsets map[string]int) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -68,7 +68,7 @@ func (s *MemoryLogStore) Commit(offsets map[string]int) error {
 	return nil
 }
 
-func (s *MemoryLogStore) ListCommitted(keys []string) (offsets map[string]int, err error) {
+func (s *InMemoryStore) ListCommitted(keys []string) (offsets map[string]int, err error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
