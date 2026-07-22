@@ -12,7 +12,7 @@ const (
 	offsetPrefix = "offset"
 )
 
-// LinKVStore is a distributed implementation of a Store building on
+// LinKVStore is a distributed implementation of a log Store building on
 // maelstrom's lin-kv store.
 type LinKVStore struct {
 	kv *maelstrom.KV

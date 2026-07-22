@@ -26,7 +26,7 @@ type listCommittedOffsetsResponseBody struct {
 	Offsets map[string]int `json:"offsets"`
 }
 
-// ShardedStore is a distributed implementation of a Store building on
+// ShardedStore is a distributed implementation of a log Store building on
 // InMemoryStore via inter-node gossiping.
 type ShardedStore struct {
 	node     *maelstrom.Node

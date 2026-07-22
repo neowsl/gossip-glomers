@@ -31,6 +31,9 @@ test-multi-node-kafka:
 test-efficient-kafka:
     maelstrom test -w kafka --bin ~/go/bin/gossip-glomers --node-count 2 --concurrency 2n --time-limit 20 --rate 1000 -- --challenge 5c
 
+test-single-node-transactions:
+    maelstrom test -w txn-rw-register --bin ~/go/bin/gossip-glomers --node-count 1 --time-limit 20 --rate 1000 --concurrency 2n --consistency-models read-uncommitted --availability total -- --challenge 6a
+
 serve:
     maelstrom serve
 

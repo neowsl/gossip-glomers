@@ -9,6 +9,7 @@ import (
 	"gossip-glomers/internal/logstore"
 	"gossip-glomers/internal/service"
 	"gossip-glomers/internal/snowflake"
+	"gossip-glomers/internal/transaction"
 
 	maelstrom "github.com/jepsen-io/maelstrom/demo/go"
 )
@@ -23,14 +24,20 @@ type Server struct {
 func New(challengeID *string) *Server {
 	node := maelstrom.NewNode()
 
-	var store logstore.Store
+	var logStore logstore.Store
 	switch *challengeID {
 	case "5a":
-		store = logstore.NewInMemoryStore()
+		logStore = logstore.NewInMemoryStore()
 	case "5b":
-		store = logstore.NewLinKVStore(node)
+		logStore = logstore.NewLinKVStore(node)
 	case "5c":
-		store = logstore.NewShardedStore(node)
+		logStore = logstore.NewShardedStore(node)
+	}
+
+	var txnStore transaction.Store
+	switch *challengeID {
+	case "6a":
+		txnStore = transaction.NewInMemoryStore()
 	}
 
 	routes := make(service.Routes)
@@ -46,7 +53,9 @@ func New(challengeID *string) *Server {
 	case '4':
 		maps.Copy(routes, gcounter.Routes(node))
 	case '5':
-		maps.Copy(routes, logstore.Routes(node, store))
+		maps.Copy(routes, logstore.Routes(node, logStore))
+	case '6':
+		maps.Copy(routes, transaction.Routes(node, txnStore))
 	}
 
 	// attach all handlers

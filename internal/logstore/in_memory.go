@@ -4,7 +4,7 @@ import "maps"
 
 import "sync"
 
-// InMemoryStore is an in-memory implementation of a Store.
+// InMemoryStore is an in-memory implementation of a log Store.
 type InMemoryStore struct {
 	mu      sync.RWMutex
 	logs    map[string][]record
