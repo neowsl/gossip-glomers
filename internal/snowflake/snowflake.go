@@ -7,6 +7,12 @@ import (
 	"time"
 )
 
+type ID uint64
+
+func (id ID) String() string {
+	return strconv.FormatUint(uint64(id), 10)
+}
+
 // Generator allows for generation of unique IDs.
 // A Generator is safe for concurrent use by multiple goroutines.
 // The epoch and nodeID should be set when the node is initialised.
@@ -23,7 +29,7 @@ func NewGenerator(nodeID string) *Generator {
 	idStr := strings.TrimPrefix(nodeID, "n")
 	nodeIDUint, _ := strconv.ParseUint(idStr, 10, 64)
 
-	epoch := time.Date(2026, time.July, 6, 0, 0, 0, 0, time.UTC)
+	epoch := time.Date(2026, time.July, 22, 0, 0, 0, 0, time.UTC)
 	epochMs := epoch.UnixMilli()
 
 	return &Generator{
@@ -35,7 +41,7 @@ func NewGenerator(nodeID string) *Generator {
 // NextID returns a 64-bit unique ID.
 // NextID is safe to call concurrently with other operations and will block
 // until all other operations finish.
-func (g *Generator) NextID() uint64 {
+func (g *Generator) NextID() ID {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
@@ -57,5 +63,5 @@ func (g *Generator) NextID() uint64 {
 
 	// bits: |------ 41 ------|-- 10 ---|--- 12 ---|
 	//       | ms since epoch | node id | sequence |
-	return uint64(now-g.epoch)<<22 | (g.nodeID&0x3FF)<<12 | g.sequence
+	return ID(uint64(now-g.epoch)<<22 | (g.nodeID&0x3FF)<<12 | g.sequence)
 }

@@ -3,7 +3,6 @@ package gcounter
 import (
 	"context"
 	"gossip-glomers/internal/snowflake"
-	"strconv"
 
 	maelstrom "github.com/jepsen-io/maelstrom/demo/go"
 )
@@ -47,7 +46,7 @@ func (c *Counter) Read() int {
 
 	// since the KV store is sequentially consistent, "force" an update by
 	// making a write call
-	barrierKey := strconv.FormatUint(c.gen.NextID(), 10) + "-barrier"
+	barrierKey := c.gen.NextID().String() + "-barrier"
 	c.kv.Write(ctx, barrierKey, 0)
 
 	sum := 0

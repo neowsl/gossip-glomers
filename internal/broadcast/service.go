@@ -20,9 +20,9 @@ const (
 // message stores details relevant to a message. Each message is marked by a
 // unique snowflake.
 type message struct {
-	Src       string `json:"src"`
-	Snowflake uint64 `json:"snowflake"`
-	Content   int    `json:"content"`
+	Src       string       `json:"src"`
+	Snowflake snowflake.ID `json:"snowflake"`
+	Content   int          `json:"content"`
 }
 
 type topologyBody struct {
@@ -44,7 +44,7 @@ func Routes(node *maelstrom.Node) service.Routes {
 	var mu sync.RWMutex
 	var gen *snowflake.Generator
 	var adj []string
-	messages := make(map[uint64]message, 1024)
+	messages := make(map[snowflake.ID]message, 1024)
 	outgoing := make(map[string]chan message)
 
 	return service.Routes{
