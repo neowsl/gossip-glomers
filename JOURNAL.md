@@ -124,3 +124,13 @@ This challenge was really cool. Looking at the **Lamport diagrams** from 5b, the
 
 - Messages-per-operation: 1.39
 - Availability: 99.96%
+
+### 6a. Single-Node, Totally-Available Transactions
+
+A fairly straightforward challenge and an intro to **MVCC**. The goal was to support transactions containing multiple Read/Write operations with **weak consistency** while guaranteeing **total availability**.
+
+#### Design decisions
+
+- Rather than making each transaction atomic, I instead treated each operation as atomic. This meant that writes may be interwoven between transactions, which is allowable in weak consistency.
+- This was also a fun challenge to explore handling JSON serde with Go. Null pointers were a real pain though...
+- This challenge was also by far the most difficult to architect; I tried to make my interfaces reusable for the upcoming iterations of this challenge, but may very well need to make some more abstractions.
