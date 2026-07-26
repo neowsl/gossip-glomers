@@ -40,7 +40,7 @@ A bit easier than "Unique ID Generation". Simply store all incoming messages in 
 
 ### 3b. Multi-Node Broadcast
 
-Significantly harder than "Single-Node Broadcast". The main challenge was preventing "infinite broadcast cycles", where nodes would broadcast the same message back and forth. To prevent this, I stored the messages in a `map[uint64]int` instead, where the key is a unique ID (shoutout "Unique ID Generation"!) and value is the actual message. When a node receives a message, it first checks if it has seen its ID, and only proceeds if not.
+Significantly harder than "Single-Node Broadcast". The main challenge was preventing "infinite broadcast cycles", where nodes would broadcast the same message back and forth. To prevent this, I stored the messages in a `map[snowflake.ID]int` instead, where the key is a unique ID (shoutout "Unique ID Generation"!) and value is the actual message. When a node receives a message, it first checks if it has seen its ID, and only proceeds if not.
 
 #### Design decisions
 
@@ -94,7 +94,7 @@ A fairly straightforward challenge. I learned how Go's interface system works!
 
 ### 5b. Multi-Node Kafka-Style Log
 
-Also a fairly simple migration from the `logstore.InMemoryStore` to a `logstore.DistributedStore` using the `lin-kv` service. Linearisability and sequential consistency are both classified as CP in in the [CAP theorem](https://en.wikipedia.org/wiki/CAP_theorem). However, linearizability guarantees global real-time synchronisation (i.e. no stale reads) at the cost of increased latency.
+Also a fairly simple migration from the `logstore.InMemoryStore` to a `DistributedStore` using the `lin-kv` service. Linearisability and sequential consistency are both classified as CP in in the [CAP theorem](https://en.wikipedia.org/wiki/CAP_theorem). However, linearizability guarantees global real-time synchronisation (i.e. no stale reads) at the cost of increased latency.
 
 #### Design decisions
 
@@ -135,4 +135,20 @@ A fairly straightforward challenge and an intro to **MVCC**. The goal was to sup
 - This was also a fun challenge to explore handling JSON serde with Go. Null pointers were a real pain though...
 - This challenge was also by far the most difficult to architect; I tried to make my interfaces reusable for the upcoming iterations of this challenge, but may very well need to make some more abstractions.
 
-♻️ The following challenges reuse much of my broadcasting code from Challenge 3, so I decided to pull out the retry/backoff logic into a `mailbox` library!
+♻️ The following challenges reuse much of my broadcasting code from Challenge 3, so I decided to pull out the retry/backoff logic into a `mailbox` library! I also used Go generics to generalise `transactions.InMemoryStore` to support 6b and 6c.
+
+### 6b. Totally-Available, Read Uncommitted Transactions
+
+An extremely interesting challenge, not just from a dist-sys angle, but from an architectural perspective as well. I refactored so much of the codebase...
+
+The main lesson of this challenge was understanding which operations/values to keep to guarantee a [Read Uncommitted](https://jepsen.io/consistency/models/read-uncommitted) consistency model. Since this challenge required **total availability**, I figured Read operations must make direct queries into the current local state of each node. Therefore, the challenge lied in how to handle Write operations.
+
+I used a **LWW (Last-Write-Wins)** model for determining which writes to keep. When a transaction is received, it is immediately **replicated** across all nodes. Since this replication uses Mailbox Envelopes, each transaction is also tied to a Snowflake ID (shoutout Challenge 2 again)! These Snowflake IDs increase with time, so we can implement LWW by simply keeping the largest Snowflake ID of the writes!
+
+💡 [Apache Cassandra](https://cassandra.apache.org/_/index.html) is a distributed database that uses LWW!
+
+#### Design decisions
+
+- I reused code from Challenge 2's Snowflake, Challenge 3's Mailbox, and Challenge 6a's InMemoryStore!
+- Replicated Write operations are handled with a LWW policy for low latency and total availability.
+- Read operations observe the current local state of each node.

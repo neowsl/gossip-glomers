@@ -7,7 +7,7 @@ type Store interface {
 	SetNode(node *maelstrom.Node)
 	SetTopology(topology map[string][]string)
 
-	// HandleOperations applies the operations sequentially, mutating the
-	// operations slice if required.
-	HandleOperations(ops []operation)
+	// HandleTransaction applies the operations in the transaction
+	// sequentially, mutating the transaction if required.
+	HandleTransaction(txn txn)
 }

@@ -37,7 +37,9 @@ func New(challengeID *string) *Server {
 	var txnStore transaction.Store
 	switch *challengeID {
 	case "6a":
-		txnStore = transaction.NewInMemoryStore()
+		txnStore = transaction.NewInMemoryStore[int, int]()
+	case "6b":
+		txnStore = transaction.NewReadUncommittedStore()
 	}
 
 	routes := make(service.Routes)

@@ -14,35 +14,30 @@ const (
 	maxBackoff       = 3 * time.Second
 )
 
-type topologyBody struct {
-	service.BaseBody
-	Topology map[string][]string `json:"topology"`
-}
-
 type broadcastBody struct {
 	service.BaseBody
 	Message int `json:"message"`
 }
 
 func Routes(node *maelstrom.Node) service.Routes {
-	mailbox := mailbox.New[int](mailbox.Config{
+	m := mailbox.New[int](mailbox.Config{
 		MaxEnvelopesPerBatch: 20,
 		MaxBackoff:           3 * time.Second,
 	})
 
 	return service.Routes{
 		"init": func(msg maelstrom.Message) error {
-			mailbox.SetNode(node)
+			m.SetNode(node)
 
 			return nil
 		},
 		"topology": func(msg maelstrom.Message) error {
-			var body topologyBody
+			var body mailbox.TopologyBody
 			if err := json.Unmarshal(msg.Body, &body); err != nil {
 				return err
 			}
 
-			mailbox.SetTopology(body.Topology)
+			m.SetTopology(body.Topology)
 
 			return node.Reply(msg, map[string]any{
 				"type": "topology_ok",
@@ -54,7 +49,7 @@ func Routes(node *maelstrom.Node) service.Routes {
 				return err
 			}
 
-			mailbox.SendAll(body.Message)
+			m.SendAll(body.Message)
 
 			return node.Reply(msg, map[string]any{
 				"type": "broadcast_ok",
@@ -63,7 +58,7 @@ func Routes(node *maelstrom.Node) service.Routes {
 		"read": func(msg maelstrom.Message) error {
 			return node.Reply(msg, map[string]any{
 				"type":     "read_ok",
-				"messages": mailbox.Read(),
+				"messages": m.Read(),
 			})
 		},
 	}

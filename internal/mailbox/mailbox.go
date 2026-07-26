@@ -19,40 +19,48 @@ type Config struct {
 	MaxBackoff time.Duration
 }
 
-// envelope[T] pairs the type-specific payload with routing and deduplication
+// Envelope[T] pairs the type-specific payload with routing and deduplication
 // fields.
-type envelope[T any] struct {
+type Envelope[T any] struct {
 	Src       string       `json:"src"`
 	Snowflake snowflake.ID `json:"snowflake"`
 	Content   T            `json:"content"`
 }
 
+type TopologyBody struct {
+	service.BaseBody
+	Topology map[string][]string `json:"topology"`
+}
+
 type mailboxBatchGossipBody[T any] struct {
 	service.BaseBody
-	Envelopes []envelope[T] `json:"envelopes"`
+	Envelopes []Envelope[T] `json:"envelopes"`
 }
 
 // Mailbox holds logic for delivering messages between nodes.
 // SetNode and SetTopology must be called before sending messages.
+// OnEnvelopeReceived may be directly set to subscribe to new envelopes.
 type Mailbox[T any] struct {
-	cfg       Config
-	node      *maelstrom.Node
-	mu        sync.RWMutex
-	gen       *snowflake.Generator
-	adj       []string
-	envelopes map[snowflake.ID]envelope[T]
-	outgoing  map[string]chan envelope[T]
+	cfg                Config
+	node               *maelstrom.Node
+	mu                 sync.RWMutex
+	gen                *snowflake.Generator
+	adj                []string
+	envelopes          map[snowflake.ID]Envelope[T]
+	outgoing           map[string]chan Envelope[T]
+	OnEnvelopeReceived func(envelope Envelope[T])
 }
 
-func New[T any](config Config) Mailbox[T] {
-	return Mailbox[T]{
-		cfg:       config,
-		envelopes: make(map[snowflake.ID]envelope[T], 1024),
-		outgoing:  make(map[string]chan envelope[T]),
+func New[T any](config Config) *Mailbox[T] {
+	return &Mailbox[T]{
+		cfg:                config,
+		envelopes:          make(map[snowflake.ID]Envelope[T], 1024),
+		outgoing:           make(map[string]chan Envelope[T]),
+		OnEnvelopeReceived: func(_ Envelope[T]) {},
 	}
 }
 
-// SetNode sets this Mailbox's node, initialises the snowflake ID generator,
+// SetNode sets this Mailbox's node, initialises the Snowflake ID generator,
 // and sets up a handler for the receiving end.
 func (m *Mailbox[T]) SetNode(node *maelstrom.Node) {
 	m.mu.Lock()
@@ -67,8 +75,8 @@ func (m *Mailbox[T]) SetNode(node *maelstrom.Node) {
 			return err
 		}
 
-		// only send unseen envelopes to avoid infinite cycle
-		newEnvelopes := make([]envelope[T], 0, len(body.Envelopes))
+		// only send unseen Envelopes to avoid infinite cycle
+		newEnvelopes := make([]Envelope[T], 0, len(body.Envelopes))
 
 		m.mu.Lock()
 		for _, e := range body.Envelopes {
@@ -77,13 +85,15 @@ func (m *Mailbox[T]) SetNode(node *maelstrom.Node) {
 				continue
 			}
 
+			go m.OnEnvelopeReceived(e)
+
 			m.envelopes[e.Snowflake] = e
 			newEnvelopes = append(newEnvelopes, e)
 		}
 		neighbours := m.adj
 		m.mu.Unlock()
 
-		// stop gossip chain if no new envelopes
+		// stop gossip chain if no new Envelopes
 		if len(newEnvelopes) > 0 {
 			for _, e := range newEnvelopes {
 				for _, n := range neighbours {
@@ -111,7 +121,7 @@ func (m *Mailbox[T]) SetTopology(topology map[string][]string) {
 
 	// initialise all channels and workers so we don't have to do it later
 	for _, n := range m.adj {
-		ch := make(chan envelope[T], 10000)
+		ch := make(chan Envelope[T], 10000)
 		m.outgoing[n] = ch
 		go m.spawnNeighbourWorker(n)
 	}
@@ -119,8 +129,9 @@ func (m *Mailbox[T]) SetTopology(topology map[string][]string) {
 
 // SendAll appends the message to this Mailbox's messages and broadcasts the
 // message to all other nodes along the topology.
-func (m *Mailbox[T]) SendAll(message T) {
-	newEnvelope := envelope[T]{
+// Returns the sent envelope.
+func (m *Mailbox[T]) SendAll(message T) Envelope[T] {
+	newEnvelope := Envelope[T]{
 		Src:       m.node.ID(),
 		Snowflake: m.gen.NextID(),
 		Content:   message,
@@ -133,6 +144,8 @@ func (m *Mailbox[T]) SendAll(message T) {
 	for _, n := range m.adj {
 		m.outgoing[n] <- newEnvelope
 	}
+
+	return newEnvelope
 }
 
 // Read returns all the messages in this Mailbox.
@@ -148,7 +161,7 @@ func (m *Mailbox[T]) Read() []T {
 	return res
 }
 
-// spawnNeighbourWorker() spawns a new goroutine that consumes envelopes from
+// spawnNeighbourWorker() spawns a new goroutine that consumes Envelopes from
 // the outgoing channel and forwards them to dest, waiting until dest becomes
 // responsive if it goes offline.
 func (m *Mailbox[T]) spawnNeighbourWorker(dest string) {
@@ -158,7 +171,7 @@ func (m *Mailbox[T]) spawnNeighbourWorker(dest string) {
 		// batch-send envelopes to avoid overloading network
 		// prepare batch first, then commit to sending (otherwise data will be
 		// lost)
-		batch := []envelope[T]{firstMsg}
+		batch := []Envelope[T]{firstMsg}
 
 		for range m.cfg.MaxEnvelopesPerBatch - 1 {
 			// select for safe concurrency
@@ -182,7 +195,7 @@ func (m *Mailbox[T]) spawnNeighbourWorker(dest string) {
 				)
 				defer cancel()
 
-				// SyncRPC will error if envelope was not received (i.e. we
+				// SyncRPC will error if Envelope was not received (i.e. we
 				// will get an ACK if envelope was received).
 				_, err := m.node.SyncRPC(ctx, dest, map[string]any{
 					"type":      "mailbox_batch_gossip",
@@ -193,7 +206,7 @@ func (m *Mailbox[T]) spawnNeighbourWorker(dest string) {
 			}()
 
 			if success {
-				// success, move onto next batch of envelopes in channel
+				// success, move onto next batch of Envelopes in channel
 				break
 			}
 

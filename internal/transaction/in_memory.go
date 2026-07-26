@@ -6,40 +6,45 @@ import (
 	maelstrom "github.com/jepsen-io/maelstrom/demo/go"
 )
 
-// InMemoryStore is an in-memory implementation of a transaction Store.
-type InMemoryStore struct {
+// InMemoryStore[K, V] is an in-memory implementation of a transaction Store.
+// It houses key-value pairs with type-K keys and type-V values.
+type InMemoryStore[K comparable, V any] struct {
 	mu     sync.RWMutex
-	values map[int]int
+	values map[K]V
 }
 
-func NewInMemoryStore() *InMemoryStore {
-	return &InMemoryStore{
-		values: make(map[int]int),
+func NewInMemoryStore[K comparable, V any]() *InMemoryStore[K, V] {
+	return &InMemoryStore[K, V]{
+		values: make(map[K]V),
 	}
 }
 
-func (s *InMemoryStore) SetNode(_ *maelstrom.Node)         {}
-func (s *InMemoryStore) SetTopology(_ map[string][]string) {}
+func (s *InMemoryStore[K, V]) SetNode(_ *maelstrom.Node)         {}
+func (s *InMemoryStore[K, V]) SetTopology(_ map[string][]string) {}
 
-func (s *InMemoryStore) HandleOperations(ops []operation) {
-	for i := range ops {
-		op := &ops[i]
+func (s *InMemoryStore[K, V]) HandleTransaction(txn txn) {
+	for i := range txn {
+		op := &txn[i]
 
 		switch op.Kind {
 		case "r":
-			val := s.read(op.Key)
+			castedKey, _ := any(op.Key).(K)
+			val := s.Read(castedKey)
 			if val != nil {
 				op.Value = new(int)
-				*op.Value = *val
+				castedValue, _ := any(*val).(int)
+				*op.Value = castedValue
 			}
 		case "w":
-			s.write(op.Key, *op.Value)
+			castedKey, _ := any(op.Key).(K)
+			castedValue, _ := any(op.Value).(V)
+			s.Write(castedKey, castedValue)
 		}
 	}
 }
 
-// read returns the current value of the key, or nil if the key doesn't exist.
-func (s *InMemoryStore) read(key int) *int {
+// Read returns the current value of the key, or nil if the key doesn't exist.
+func (s *InMemoryStore[K, V]) Read(key K) *V {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -51,8 +56,8 @@ func (s *InMemoryStore) read(key int) *int {
 	return &val
 }
 
-// write sets the value of the key.
-func (s *InMemoryStore) write(key int, value int) {
+// Write sets the value of the key.
+func (s *InMemoryStore[K, V]) Write(key K, value V) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

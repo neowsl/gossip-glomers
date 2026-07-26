@@ -3,6 +3,7 @@ package transaction
 import (
 	"encoding/json"
 	"fmt"
+	"gossip-glomers/internal/mailbox"
 	"gossip-glomers/internal/service"
 
 	maelstrom "github.com/jepsen-io/maelstrom/demo/go"
@@ -47,21 +48,40 @@ func (op operation) MarshalJSON() ([]byte, error) {
 	})
 }
 
+type txn []operation
+
 type txnBody struct {
 	service.BaseBody
-	MsgID int         `json:"msg_id"`
-	Txn   []operation `json:"txn"`
+	MsgID int `json:"msg_id"`
+	Txn   txn `json:"txn"`
 }
 
 func Routes(node *maelstrom.Node, store Store) service.Routes {
 	return service.Routes{
+		"init": func(msg maelstrom.Message) error {
+			store.SetNode(node)
+
+			return nil
+		},
+		"topology": func(msg maelstrom.Message) error {
+			var body mailbox.TopologyBody
+			if err := json.Unmarshal(msg.Body, &body); err != nil {
+				return err
+			}
+
+			store.SetTopology(body.Topology)
+
+			return node.Reply(msg, map[string]any{
+				"type": "topology_ok",
+			})
+		},
 		"txn": func(msg maelstrom.Message) error {
 			var body txnBody
 			if err := json.Unmarshal(msg.Body, &body); err != nil {
 				return err
 			}
 
-			store.HandleOperations(body.Txn)
+			store.HandleTransaction(body.Txn)
 
 			return node.Reply(msg, map[string]any{
 				"type": "txn_ok",
