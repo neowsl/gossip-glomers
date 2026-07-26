@@ -90,11 +90,11 @@ A fairly straightforward challenge. I learned how Go's interface system works!
 #### Design decisions
 
 - I initially thought that "committing" an offset meant that older messages can be deleted. While this is true of services like RabbitMQ, Kafka preserves *all* messages. The offset serves as a "bookmark" for the client rather than the server.
-- I used the **dependency injection** design pattern: `LogStore` is an interface that can have multiple implementations, such as the `MemoryLogStore` for this part of the challenge. Then, by changing the command-line arguments, we can programmatically select which implementation of `LogStore` to use!
+- I used the **dependency injection** design pattern: `logstore.Store` is an interface that can have multiple implementations, such as the `logstore.InMemoryStore` for this part of the challenge. Then, by changing the command-line arguments, we can programmatically select which implementation of `logstore.Store` to use!
 
 ### 5b. Multi-Node Kafka-Style Log
 
-Also a fairly simple migration from the `MemoryLogStore` to a `DistributedLogStore` using the `lin-kv` service. Linearisability and sequential consistency are both classified as CP in in the [CAP theorem](https://en.wikipedia.org/wiki/CAP_theorem). However, linearizability guarantees global real-time synchronisation (i.e. no stale reads) at the cost of increased latency.
+Also a fairly simple migration from the `logstore.InMemoryStore` to a `logstore.DistributedStore` using the `lin-kv` service. Linearisability and sequential consistency are both classified as CP in in the [CAP theorem](https://en.wikipedia.org/wiki/CAP_theorem). However, linearizability guarantees global real-time synchronisation (i.e. no stale reads) at the cost of increased latency.
 
 #### Design decisions
 
@@ -134,3 +134,5 @@ A fairly straightforward challenge and an intro to **MVCC**. The goal was to sup
 - Rather than making each transaction atomic, I instead treated each operation as atomic. This meant that writes may be interwoven between transactions, which is allowable in weak consistency.
 - This was also a fun challenge to explore handling JSON serde with Go. Null pointers were a real pain though...
 - This challenge was also by far the most difficult to architect; I tried to make my interfaces reusable for the upcoming iterations of this challenge, but may very well need to make some more abstractions.
+
+♻️ The following challenges reuse much of my broadcasting code from Challenge 3, so I decided to pull out the retry/backoff logic into a `mailbox` library!

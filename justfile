@@ -34,6 +34,9 @@ test-efficient-kafka:
 test-single-node-transactions:
     maelstrom test -w txn-rw-register --bin ~/go/bin/gossip-glomers --node-count 1 --time-limit 20 --rate 1000 --concurrency 2n --consistency-models read-uncommitted --availability total -- --challenge 6a
 
+test-read-uncommitted-transactions:
+    maelstrom test -w txn-rw-register --bin ~/go/bin/gossip-glomers --node-count 2 --concurrency 2n --time-limit 20 --rate 1000 --consistency-models read-uncommitted --availability total --nemesis partition -- --challenge 6b
+
 serve:
     maelstrom serve
 
