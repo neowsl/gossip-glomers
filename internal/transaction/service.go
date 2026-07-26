@@ -61,25 +61,7 @@ func Routes(node *maelstrom.Node, store Store) service.Routes {
 				return err
 			}
 
-			for i := range body.Txn {
-				op := &body.Txn[i]
-
-				switch op.Kind {
-				case "r":
-					value, err := store.Read(op.Key)
-					if err != nil {
-						return err
-					}
-					if value != nil {
-						op.Value = new(int)
-						*op.Value = *value
-					}
-				case "w":
-					if err := store.Write(op.Key, *op.Value); err != nil {
-						return err
-					}
-				}
-			}
+			store.HandleOperations(body.Txn)
 
 			return node.Reply(msg, map[string]any{
 				"type": "txn_ok",

@@ -1,11 +1,13 @@
 package transaction
 
-// Store is a transaction store with atomic Read and Write operations.
-type Store interface {
-	// Read returns the current value of the key.
-	// Returns a nil value for non-existent keys.
-	Read(key int) (value *int, err error)
+import maelstrom "github.com/jepsen-io/maelstrom/demo/go"
 
-	// Write sets the value of the key.
-	Write(key, value int) error
+// Store is a transaction store that handles operations.
+type Store interface {
+	SetNode(node *maelstrom.Node)
+	SetTopology(topology map[string][]string)
+
+	// HandleOperations applies the operations sequentially, mutating the
+	// operations slice if required.
+	HandleOperations(ops []operation)
 }
