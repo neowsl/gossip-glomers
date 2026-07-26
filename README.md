@@ -1,4 +1,4 @@
-# Engineering Log: Gossip Glomers
+# Engineering Log: Maelstrom Matrix / Gossip Glomers
 
 > Having fun with distributed systems :)
 
