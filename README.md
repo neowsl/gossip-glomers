@@ -50,7 +50,9 @@ Significantly harder than "Single-Node Broadcast". The main challenge was preven
 
 ### 3c. Fault Tolerant Broadcast
 
-Some really interesting problems here! In order to preserve and forward messages after a network partitions and heals, a lot more work has to be done. I got to experience the [Two Generals' Problem](https://www.youtube.com/watch?v=IP-rGJKSZ3s) firsthand!
+Some really interesting problems here! In order to preserve and forward messages after a network partitions and heals, a lot more work has to be done.
+
+💡 I essentially got to experience the [Two Generals' Problem](https://www.youtube.com/watch?v=IP-rGJKSZ3s) firsthand!
 
 #### Design decisions
 
