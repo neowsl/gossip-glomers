@@ -1,0 +1,28 @@
+name: Deploy Maelstrom Matrix Visualizer
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: codeberg-small
+    defaults:
+      run:
+        working-directory: visualizer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - uses: https://codeberg.org/git-pages/action@v2
+        with:
+          site: https://nealwang.dev/maelstrom-matrix/
+          server: codeberg.page
+          token: ${{ forge.token }}
+          source: visualizer/dist/
