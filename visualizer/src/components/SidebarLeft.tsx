@@ -190,12 +190,12 @@ const SidebarLeft: FC = () => {
                         <p>Code licensed under GPLv3.</p>
                         <a
                             className="link flex items-center gap-1"
-                            href="https://github.com/neowsl/maelstrom-matrix"
+                            href="https://codeberg.org/nealwang/maelstrom-matrix"
                             target="_blank"
                             rel="noopener"
                         >
                             <ExternalLink size={16} />
-                            GitHub
+                            Codeberg
                         </a>
                     </aside>
                 </footer>
