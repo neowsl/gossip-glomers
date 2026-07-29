@@ -4,13 +4,13 @@ import tailwindcss from "@tailwindcss/vite";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
-export default defineConfig(({ command }) => ({
+export default defineConfig({
     plugins: [
         react(),
         tailwindcss(),
         babel({ presets: [reactCompilerPreset()] }),
     ],
-    base: command === "build" ? "/maelstrom-matrix/" : "/",
+    base: "/",
     resolve: {
         alias: {
             "@": path.resolve(__dirname, "./src"),
@@ -18,4 +18,4 @@ export default defineConfig(({ command }) => ({
             "@lib": path.resolve(__dirname, "./src/lib"),
         },
     },
-}));
+});

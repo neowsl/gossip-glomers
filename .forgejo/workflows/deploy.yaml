@@ -22,8 +22,7 @@ jobs:
       - run: bun run build
       - uses: https://codeberg.org/git-pages/action@v2
         with:
-          site: https://nealwang.dev/
-          path: maelstrom-matrix
+          site: https://maelstrom.nealwang.dev/
           server: codeberg.page
           token: ${{ forge.token }}
           source: visualizer/dist/
