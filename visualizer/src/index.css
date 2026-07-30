@@ -2,7 +2,6 @@
 
 @import "tailwindcss";
 @plugin "daisyui" {
-    /* biome-ignore lint/correctness/noUnknownProperty: daisyui */
     themes: synthwave --default;
 }
 
