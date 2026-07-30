@@ -18,6 +18,7 @@ export class GCounterStrategy implements ChallengeStrategy {
         if (
             evt.type === "read_ok" &&
             evt.src.startsWith("n") &&
+            evt.dest.startsWith("c") &&
             evt.value !== undefined
         ) {
             engine.nodeValues.set(evt.src, evt.value);

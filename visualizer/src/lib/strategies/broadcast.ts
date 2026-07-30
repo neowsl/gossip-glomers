@@ -27,12 +27,35 @@ export class BroadcastStrategy implements ChallengeStrategy {
         if (evt.type === "broadcast" && evt.message !== undefined) {
             this.totalBroadcasts++;
             if (evt.dest.startsWith("n")) {
-                const current = engine.nodeValues.get(evt.dest) || 0;
-                engine.nodeValues.set(
-                    evt.dest,
-                    Math.max(current, this.totalBroadcasts),
-                );
+                const messages =
+                    engine.nodeMessageSets.get(evt.dest) ?? new Set();
+                messages.add(evt.message);
+                engine.nodeMessageSets.set(evt.dest, messages);
+                engine.nodeValues.set(evt.dest, messages.size);
             }
+        }
+
+        if (
+            evt.type === "mailbox_batch_gossip" &&
+            evt.delivered !== false &&
+            evt.dest.startsWith("n")
+        ) {
+            const envelopes = Array.isArray(evt.body?.envelopes)
+                ? evt.body.envelopes
+                : [];
+            const messages = engine.nodeMessageSets.get(evt.dest) ?? new Set();
+            for (const envelope of envelopes) {
+                if (
+                    typeof envelope === "object" &&
+                    envelope !== null &&
+                    "content" in envelope &&
+                    typeof envelope.content === "number"
+                ) {
+                    messages.add(envelope.content);
+                }
+            }
+            engine.nodeMessageSets.set(evt.dest, messages);
+            engine.nodeValues.set(evt.dest, messages.size);
         }
 
         if (
@@ -44,11 +67,13 @@ export class BroadcastStrategy implements ChallengeStrategy {
         }
 
         const counts = this.workers.map((n) => engine.nodeValues.get(n) || 0);
-        const maxCount = Math.max(...counts, 1);
         const minCount = Math.min(...counts);
 
         store.updateMetrics({
-            convergence: Math.round((minCount / maxCount) * 100),
+            convergence:
+                this.totalBroadcasts === 0
+                    ? 100
+                    : Math.round((minCount / this.totalBroadcasts) * 100),
             totalMessages: this.totalBroadcasts,
         });
     }

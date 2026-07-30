@@ -1,6 +1,7 @@
 import { User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { COLORS } from "@/lib/colors";
+import { startPlayback } from "@/lib/playbackScheduler";
 import { SimulationEngine } from "@/lib/simulationEngine";
 import { useMaelstromStore } from "@/lib/store";
 import { BroadcastStrategy } from "@/lib/strategies/broadcast";
@@ -10,33 +11,39 @@ import { KafkaLogStrategy } from "@/lib/strategies/kafkaLog";
 import { UniqueIdsStrategy } from "@/lib/strategies/uniqueIds";
 import { statusColor } from "@/lib/utils";
 
-const SECS_PER_CHALLENGE = 20;
+const PLAYBACK_DURATION_MS = 30_000;
 
 export function MaelstromCanvas() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const engineRef = useRef<SimulationEngine | null>(null);
+    const playbackIndexRef = useRef(0);
 
     const isPlaying = useMaelstromStore((state) => state.isPlaying);
     const speed = useMaelstromStore((state) => state.speed);
     const challengeId = useMaelstromStore((state) => state.challengeId);
 
-    const events = useMaelstromStore((state) => state.events);
+    const topology = useMaelstromStore((state) => state.topology);
     const convergence = useMaelstromStore((state) => state.convergence);
-    const rawLogsLength = useMaelstromStore((state) => state.rawLogs.length);
+    const playbackProgress = useMaelstromStore(
+        (state) => state.playbackProgress,
+    );
     const resetTicket = useMaelstromStore((state) => state.resetTicket);
 
-    const addLog = useMaelstromStore((state) => state.addLog);
-    const setPlayback = useMaelstromStore((state) => state.setPlayback);
+    const setPlaybackProgress = useMaelstromStore(
+        (state) => state.setPlaybackProgress,
+    );
+    const completePlayback = useMaelstromStore(
+        (state) => state.completePlayback,
+    );
 
     const [clients, setClients] = useState<string[]>([]);
 
-    const timelinePct =
-        events.length > 0
-            ? Math.min(100, Math.round((rawLogsLength / events.length) * 100))
-            : 0;
+    const timelinePct = Math.round(playbackProgress * 100);
 
     useEffect(() => {
         if (!canvasRef.current) return;
+
+        playbackIndexRef.current = 0;
 
         const canvas = canvasRef.current;
         const engine = new SimulationEngine(canvasRef.current);
@@ -73,19 +80,19 @@ export function MaelstromCanvas() {
 
         switch (challengeId) {
             case "echo":
-                engine.loadChallenge(new EchoStrategy());
+                engine.loadChallenge(new EchoStrategy(), topology);
                 break;
             case "unique-ids":
-                engine.loadChallenge(new UniqueIdsStrategy());
+                engine.loadChallenge(new UniqueIdsStrategy(), topology);
                 break;
             case "broadcast":
-                engine.loadChallenge(new BroadcastStrategy());
+                engine.loadChallenge(new BroadcastStrategy(), topology);
                 break;
             case "g-counter":
-                engine.loadChallenge(new GCounterStrategy());
+                engine.loadChallenge(new GCounterStrategy(), topology);
                 break;
             case "kafka-log":
-                engine.loadChallenge(new KafkaLogStrategy());
+                engine.loadChallenge(new KafkaLogStrategy(), topology);
                 break;
         }
 
@@ -100,30 +107,26 @@ export function MaelstromCanvas() {
         }
 
         return () => engine.destroy();
-    }, [challengeId, resetTicket]);
+    }, [challengeId, resetTicket, topology]);
 
     useEffect(() => {
         if (!isPlaying || !engineRef.current) return;
 
-        const eventsList = useMaelstromStore.getState().events;
-
-        let currentIdx = useMaelstromStore.getState().rawLogs.length;
-
-        const ms = Math.round(
-            (SECS_PER_CHALLENGE * 1000) / (eventsList.length * speed),
-        );
-        const timer = setInterval(() => {
-            if (currentIdx >= eventsList.length) {
-                setPlayback(false);
-                return;
-            }
-            const evt = eventsList[currentIdx++];
-            addLog(evt.raw);
-            engineRef.current?.processEvent(evt);
-        }, ms);
-
-        return () => clearInterval(timer);
-    }, [isPlaying, speed, addLog, setPlayback]);
+        const state = useMaelstromStore.getState();
+        return startPlayback({
+            events: state.events,
+            fromIndex: playbackIndexRef.current,
+            fromProgress: state.playbackProgress,
+            playbackDuration: PLAYBACK_DURATION_MS,
+            speed,
+            onEvent: (event) => {
+                playbackIndexRef.current++;
+                engineRef.current?.processEvent(event);
+            },
+            onProgress: setPlaybackProgress,
+            onComplete: completePlayback,
+        });
+    }, [completePlayback, isPlaying, speed, setPlaybackProgress]);
 
     return (
         <div className="flex h-full w-full flex-col overflow-hidden">
