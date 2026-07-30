@@ -17,11 +17,16 @@ interface MaelstromState {
     speed: number;
     resetTicket: number;
     playbackIndex: number;
+    playbackProgress: number;
 
     setChallengeId: (id: ChallengeId) => void;
     setPlayback: (isPlaying: boolean) => void;
     setSpeed: (speed: number) => void;
-    setPlaybackProgress: (index: number, logs: string[]) => void;
+    setPlaybackProgress: (
+        index: number,
+        progress: number,
+        logs: string[],
+    ) => void;
     completePlayback: (index: number, logs: string[]) => void;
     updateMetrics: (metrics: Partial<MaelstromState>) => void;
     reset: () => void;
@@ -52,6 +57,7 @@ export const useMaelstromStore = create<MaelstromState>((set) => {
         speed: 1,
         resetTicket: 0,
         playbackIndex: 0,
+        playbackProgress: 0,
 
         setChallengeId: async (id) => {
             const baseUrl = window.location.origin + import.meta.env.BASE_URL;
@@ -79,13 +85,15 @@ export const useMaelstromStore = create<MaelstromState>((set) => {
                 rawLogs: [],
                 isPlaying: false,
                 playbackIndex: 0,
+                playbackProgress: 0,
             });
         },
         setPlayback: (isPlaying) => set({ isPlaying }),
         setSpeed: (speed) => set({ speed }),
-        setPlaybackProgress: (playbackIndex, logs) =>
+        setPlaybackProgress: (playbackIndex, playbackProgress, logs) =>
             set((state) => ({
                 playbackIndex,
+                playbackProgress,
                 rawLogs: [...logs.toReversed(), ...state.rawLogs].slice(0, 100),
             })),
         completePlayback: (playbackIndex, logs) => {
@@ -95,6 +103,7 @@ export const useMaelstromStore = create<MaelstromState>((set) => {
                 ...pendingMetrics,
                 isPlaying: false,
                 playbackIndex,
+                playbackProgress: 1,
                 rawLogs: [...logs.toReversed(), ...state.rawLogs].slice(0, 100),
             }));
             pendingMetrics = {};
@@ -118,6 +127,7 @@ export const useMaelstromStore = create<MaelstromState>((set) => {
                 isPlaying: false,
                 resetTicket: state.resetTicket + 1,
                 playbackIndex: 0,
+                playbackProgress: 0,
             }));
         },
     };

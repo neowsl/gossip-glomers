@@ -7,7 +7,6 @@ import type { ChallengeStrategy } from ".";
 export class KafkaLogStrategy implements ChallengeStrategy {
     public id = "kafka-log";
     public workers = ["n0", "n1", "n2", "n3", "n4", "n5", "n6", "n7", "n8"];
-    public service = "lin-kv";
 
     private totalMessages = 0;
 
@@ -50,7 +49,6 @@ export class KafkaLogStrategy implements ChallengeStrategy {
     }
 
     public getDisplayString(nodeId: string, engine: SimulationEngine) {
-        if (nodeId === "lin-kv") return null;
         return this.getNodeValue(nodeId, engine).toString();
     }
 

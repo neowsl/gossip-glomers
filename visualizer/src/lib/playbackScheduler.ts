@@ -1,22 +1,23 @@
 import type { ParsedEvent } from "./parser";
 
 const PROGRESS_INTERVAL_MS = 100;
+const MAX_IDLE_GAP_MS = 250;
 
 interface PlaybackOptions {
     events: ParsedEvent[];
     fromIndex: number;
-    sourceDuration: number;
+    fromProgress: number;
     playbackDuration: number;
     speed: number;
     onEvent: (event: ParsedEvent) => void;
-    onProgress: (index: number, logs: string[]) => void;
+    onProgress: (index: number, progress: number, logs: string[]) => void;
     onComplete: (index: number, logs: string[]) => void;
 }
 
 export const startPlayback = ({
     events,
     fromIndex,
-    sourceDuration,
+    fromProgress,
     playbackDuration,
     speed,
     onEvent,
@@ -32,22 +33,36 @@ export const startPlayback = ({
     let index = fromIndex;
     let lastProgressAt = 0;
     let pendingLogs: string[] = [];
-    const scale = sourceDuration > 0 ? playbackDuration / sourceDuration : 0;
-    const startingOffset = events[fromIndex].time * scale;
+    const eventTimes = events.reduce<number[]>((times, event, eventIndex) => {
+        if (eventIndex === 0) return [0];
+
+        const sourceGap = Math.max(0, event.time - events[eventIndex - 1].time);
+        times.push(
+            times[eventIndex - 1] + Math.min(sourceGap, MAX_IDLE_GAP_MS),
+        );
+        return times;
+    }, []);
+    const replayDuration = eventTimes.at(-1) ?? 0;
+    const scale = replayDuration > 0 ? playbackDuration / replayDuration : 0;
+    const startingOffset = replayDuration * fromProgress * scale;
     const startedAt = performance.now() - startingOffset / speed;
 
-    const publishProgress = (now: number, force = false) => {
-        if (!force && now - lastProgressAt < PROGRESS_INTERVAL_MS) return;
-        onProgress(index, pendingLogs);
+    const publishProgress = (now: number, replayTime: number) => {
+        if (now - lastProgressAt < PROGRESS_INTERVAL_MS) return;
+        onProgress(
+            index,
+            replayDuration > 0 ? Math.min(replayTime / replayDuration, 1) : 1,
+            pendingLogs,
+        );
         pendingLogs = [];
         lastProgressAt = now;
     };
 
     const tick = (now: number) => {
-        const sourceTime =
+        const replayTime =
             scale > 0 ? ((now - startedAt) * speed) / scale : Infinity;
 
-        while (index < events.length && events[index].time <= sourceTime) {
+        while (index < events.length && eventTimes[index] <= replayTime) {
             const event = events[index++];
             onEvent(event);
             pendingLogs.push(event.raw);
@@ -58,7 +73,7 @@ export const startPlayback = ({
             return;
         }
 
-        publishProgress(now);
+        publishProgress(now, replayTime);
         frameId = requestAnimationFrame(tick);
     };
 

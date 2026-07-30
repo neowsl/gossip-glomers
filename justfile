@@ -49,7 +49,7 @@ gen-logs:
     just export-log broadcast
     maelstrom test -w g-counter --bin ~/go/bin/gossip-glomers --rate 100 --time-limit 5 --nemesis partition -- --challenge 4
     just export-log g-counter
-    maelstrom test -w kafka --bin ~/go/bin/gossip-glomers --node-count 2 --concurrency 2n --time-limit 5 --rate 100 -- --challenge 5b
+    maelstrom test -w kafka --bin ~/go/bin/gossip-glomers --node-count 9 --concurrency 2n --time-limit 5 --rate 100 -- --challenge 5c
     just export-log kafka-log
 
 export-log challenge run-dir="store/current":

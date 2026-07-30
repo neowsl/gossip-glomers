@@ -38,9 +38,9 @@ const CHALLENGES: Record<ChallengeId, ChallengeDetails> = {
             "CRDT Grow-Only Counter with sequential consistency (seq-kv). Nodes own exclusive namespaces, aggregate asynchronously — eliminating service contention.",
     },
     "kafka-log": {
-        displayName: "Kafka-Style Log",
+        displayName: "Sharded Kafka-Style Log",
         objective:
-            "Coordinate a distributed Kafka-style log through lin-kv. Observe reads, writes, and compare-and-swap retries between worker nodes and the linearizable service.",
+            "Shard log ownership across worker nodes using hash-based routing. Observe scatter-gather requests moving directly between nodes without lin-kv contention.",
     },
 };
 

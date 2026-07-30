@@ -62,13 +62,13 @@ Packet colors only use roles from `visualizer/src/lib/colors.ts`, which carries 
 - CAS operations: warning
 - Undelivered messages and failures: error
 
-Broadcast convergence now consumes delivered `mailbox_batch_gossip` envelopes, rather than inferring propagation solely from later client reads. Kafka's bundled fixture runs challenge 5b so it contains real `lin-kv` reads, writes, and CAS requests. Challenge 5c intentionally avoids `lin-kv` and can still be exported separately.
+Broadcast convergence now consumes delivered `mailbox_batch_gossip` envelopes, rather than inferring propagation solely from later client reads. Kafka's bundled fixture runs challenge 5c with nine workers. It demonstrates hash-based ownership and scatter-gather traffic directly between nodes and intentionally contains no `lin-kv` service.
 
 ## Playback And Performance
 
 Playback uses one `requestAnimationFrame` scheduler instead of one `setInterval` callback per event. Each frame drains every event whose source timestamp is due. This avoids browser timer clamping and supports bursts of hundreds of messages per second.
 
-The default replay duration is 45 seconds at speed 1. Changing playback speed rescales it, so speed 2 completes in roughly 22.5 seconds. Pausing resumes from the exact processed event index. Completion atomically publishes the final cursor, pending logs, and throttled metrics so the timeline and convergence state cannot stop one batch short.
+The default replay duration is 45 seconds at speed 1. Changing playback speed rescales it, so speed 2 completes in roughly 22.5 seconds. Before scaling, inter-event gaps are capped at 250 ms; this compresses Maelstrom's 8-10 second recovery and analysis pauses to roughly 2-3 seconds while preserving timing within active message bursts. The displayed timeline uses this compressed replay clock rather than event count. Pausing resumes from the exact processed event index and displayed time. Completion atomically publishes the final cursor, pending logs, and throttled metrics so the timeline and convergence state cannot stop one batch short.
 
 Canvas simulation state remains outside React. Zustand receives playback progress, log rows, and metrics at most every 100 ms. The visible log is capped at 100 rows. Packet shadows are disabled automatically when at least 200 packets are active, reducing expensive canvas blur work during bursts.
 

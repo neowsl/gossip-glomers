@@ -11,7 +11,7 @@ import { KafkaLogStrategy } from "@/lib/strategies/kafkaLog";
 import { UniqueIdsStrategy } from "@/lib/strategies/uniqueIds";
 import { statusColor } from "@/lib/utils";
 
-const PLAYBACK_DURATION_MS = 45_000;
+const PLAYBACK_DURATION_MS = 30_000;
 
 export function MaelstromCanvas() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -22,10 +22,11 @@ export function MaelstromCanvas() {
     const speed = useMaelstromStore((state) => state.speed);
     const challengeId = useMaelstromStore((state) => state.challengeId);
 
-    const events = useMaelstromStore((state) => state.events);
     const topology = useMaelstromStore((state) => state.topology);
     const convergence = useMaelstromStore((state) => state.convergence);
-    const playbackIndex = useMaelstromStore((state) => state.playbackIndex);
+    const playbackProgress = useMaelstromStore(
+        (state) => state.playbackProgress,
+    );
     const resetTicket = useMaelstromStore((state) => state.resetTicket);
 
     const setPlaybackProgress = useMaelstromStore(
@@ -37,10 +38,7 @@ export function MaelstromCanvas() {
 
     const [clients, setClients] = useState<string[]>([]);
 
-    const timelinePct =
-        events.length > 0
-            ? Math.min(100, Math.round((playbackIndex / events.length) * 100))
-            : 0;
+    const timelinePct = Math.round(playbackProgress * 100);
 
     useEffect(() => {
         if (!canvasRef.current) return;
@@ -118,7 +116,7 @@ export function MaelstromCanvas() {
         return startPlayback({
             events: state.events,
             fromIndex: playbackIndexRef.current,
-            sourceDuration: state.duration,
+            fromProgress: state.playbackProgress,
             playbackDuration: PLAYBACK_DURATION_MS,
             speed,
             onEvent: (event) => {
