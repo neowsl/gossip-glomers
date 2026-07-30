@@ -40,7 +40,7 @@ const CHALLENGES: Record<ChallengeId, ChallengeDetails> = {
     "kafka-log": {
         displayName: "Kafka-Style Log",
         objective:
-            "Partition log ownership across nodes using hash-based routing. Eliminate lin-kv CAS contention entirely. Use scatter-gather for multi-key operations.",
+            "Coordinate a distributed Kafka-style log through lin-kv. Observe reads, writes, and compare-and-swap retries between worker nodes and the linearizable service.",
     },
 };
 

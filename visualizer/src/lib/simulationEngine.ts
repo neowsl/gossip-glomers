@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 import { COLORS } from "./colors";
-import type { ParsedEvent } from "./parser";
+import type { ParsedEvent, ParsedTopology } from "./parser";
 import { useMaelstromStore } from "./store";
 import type { ChallengeStrategy } from "./strategies";
 import type { Point } from "./types";
@@ -21,6 +21,7 @@ interface Packet {
     dest: Point;
     progress: number;
     color: string;
+    delivered: boolean;
 }
 interface Burst {
     id: number;
@@ -48,6 +49,12 @@ const PROTOCOL_COLORS: Record<string, string> = {
     send_ok: COLORS.SUCCESS,
     poll_ok: COLORS.SUCCESS,
     assign_ok: COLORS.SUCCESS,
+    mailbox_batch_gossip: COLORS.PRIMARY,
+    mailbox_batch_gossip_ok: COLORS.SUCCESS,
+    write: COLORS.ACCENT,
+    write_ok: COLORS.SUCCESS,
+    cas: COLORS.WARNING,
+    cas_ok: COLORS.SUCCESS,
 };
 
 export class SimulationEngine {
@@ -63,6 +70,7 @@ export class SimulationEngine {
     private sim: d3.Simulation<NodeDatum, LinkDatum>;
 
     public strategy?: ChallengeStrategy;
+    private topology?: ParsedTopology;
 
     public nodeValues = new Map<string, number>();
     public nodeMessageSets = new Map<string, Set<number>>();
@@ -82,8 +90,16 @@ export class SimulationEngine {
             .alphaDecay(0.02);
     }
 
-    public loadChallenge(strategy: ChallengeStrategy) {
+    public loadChallenge(
+        strategy: ChallengeStrategy,
+        topology?: ParsedTopology,
+    ) {
         this.strategy = strategy;
+        this.topology = topology;
+        if (topology?.dynamic) {
+            strategy.workers = topology.workers;
+            strategy.service = topology.services[0];
+        }
         this.resetState();
         this.initializeTopology();
         this.startLoop();
@@ -106,25 +122,35 @@ export class SimulationEngine {
         const cx = W / 2,
             cy = H / 2,
             orbit = Math.min(W, H) * 0.4;
+        const workerTargets = new Map<string, Point>();
 
         this.nodes = this.strategy.workers.map((id, i) => {
             const a =
                 // biome-ignore lint/style/noNonNullAssertion: map
                 (2 * Math.PI * i) / this.strategy!.workers.length - Math.PI / 2;
+            const target = {
+                x: cx + orbit * Math.cos(a),
+                y: cy + orbit * Math.sin(a),
+            };
+            workerTargets.set(id, target);
             return {
                 id,
                 down: false,
-                x: cx + orbit * Math.cos(a),
-                y: cy + orbit * Math.sin(a),
+                ...target,
                 vx: 0,
                 vy: 0,
             };
         });
 
-        if (this.strategy.service) {
+        const services = this.topology?.dynamic
+            ? this.topology.services
+            : this.strategy.service
+              ? [this.strategy.service]
+              : [];
+        for (const service of services) {
             this.nodes.push({
-                id: this.strategy.service,
-                service: this.strategy.service,
+                id: service,
+                service,
                 down: false,
                 x: cx,
                 y: cy,
@@ -133,24 +159,59 @@ export class SimulationEngine {
             });
         }
 
-        this.links = this.nodes.flatMap((src, i) =>
-            this.nodes.slice(i + 1).map((dest) => ({
-                source: src.id,
-                target: dest.id,
-                severed: false,
-            })),
-        );
+        const topologyLinks = this.topology?.dynamic
+            ? this.topology.links
+            : undefined;
+        const linkKeys = new Set<string>();
+        this.links = topologyLinks
+            ? Object.entries(topologyLinks).flatMap(([src, destinations]) =>
+                  destinations.flatMap((dest) => {
+                      if (!this.nodes.some((node) => node.id === dest))
+                          return [];
+                      const key = [src, dest].sort().join(":");
+                      if (linkKeys.has(key)) return [];
+                      linkKeys.add(key);
+                      return [{ source: src, target: dest, severed: false }];
+                  }),
+              )
+            : this.nodes.flatMap((src, i) =>
+                  this.nodes.slice(i + 1).map((dest) => ({
+                      source: src.id,
+                      target: dest.id,
+                      severed: false,
+                  })),
+              );
+
+        const linkForce = d3
+            .forceLink<NodeDatum, LinkDatum>(this.links)
+            .id((d) => d.id)
+            .distance(orbit * 0.8);
+        if (this.strategy.id === "broadcast") linkForce.strength(0.02);
 
         this.sim
             .nodes(this.nodes)
-            .force(
-                "link",
-                d3
-                    .forceLink<NodeDatum, LinkDatum>(this.links)
-                    .id((d) => d.id)
-                    .distance(orbit * 0.8),
-            )
+            .force("link", linkForce)
             .force("center", d3.forceCenter(cx, cy))
+            .force(
+                "orbitX",
+                this.strategy.id === "broadcast"
+                    ? d3
+                          .forceX<NodeDatum>(
+                              (node) => workerTargets.get(node.id)?.x ?? cx,
+                          )
+                          .strength(0.25)
+                    : null,
+            )
+            .force(
+                "orbitY",
+                this.strategy.id === "broadcast"
+                    ? d3
+                          .forceY<NodeDatum>(
+                              (node) => workerTargets.get(node.id)?.y ?? cy,
+                          )
+                          .strength(0.25)
+                    : null,
+            )
             .alpha(0.7)
             .restart();
     }
@@ -171,8 +232,13 @@ export class SimulationEngine {
         }
 
         if (evt.src && evt.dest) {
-            const packetColor = PROTOCOL_COLORS[evt.type];
-            this.spawnPacket(evt.src, evt.dest, packetColor);
+            const packetColor = this.getPacketColor(evt);
+            this.spawnPacket(
+                evt.src,
+                evt.dest,
+                packetColor,
+                evt.delivered !== false,
+            );
 
             const srcNode = this.nodes.find((n) => n.id === evt.src);
             if (srcNode?.readyToBurst) {
@@ -184,7 +250,25 @@ export class SimulationEngine {
         this.strategy?.processEvent(evt, this);
     }
 
-    public spawnPacket(srcId: string, destId: string, color: string) {
+    private getPacketColor(evt: ParsedEvent) {
+        if (evt.delivered === false || evt.type === "error")
+            return COLORS.ERROR;
+        const serviceIds = new Set(this.topology?.services ?? []);
+        if (serviceIds.has(evt.src) || serviceIds.has(evt.dest)) {
+            return evt.type.endsWith("_ok") ? COLORS.SUCCESS : COLORS.ACCENT;
+        }
+        return (
+            PROTOCOL_COLORS[evt.type] ??
+            (evt.type.endsWith("_ok") ? COLORS.SUCCESS : COLORS.SECONDARY)
+        );
+    }
+
+    public spawnPacket(
+        srcId: string,
+        destId: string,
+        color: string,
+        delivered = true,
+    ) {
         const p1 = this.getPosition(srcId);
         const p2 = this.getPosition(destId);
         if (!p1 || !p2) return;
@@ -215,6 +299,7 @@ export class SimulationEngine {
             dest: p2,
             progress: 0,
             color,
+            delivered,
         });
     }
 
@@ -245,12 +330,10 @@ export class SimulationEngine {
         const match = id.match(/\d+/);
         const index = match ? parseInt(match[0], 10) : 0;
 
-        let total = this.nodes.length;
-        if (["g-counter", "kafka-log"].includes(this.strategy?.id ?? ""))
-            total--;
+        const total = this.strategy?.workers.length ?? this.nodes.length;
 
         const padding = 64;
-        const innerWidth = this.canvas.width - padding * 2;
+        const innerWidth = this.canvas.clientWidth - padding * 2;
         const fraction = total > 0 ? (index + 0.5) / total : 0.5;
 
         return {
@@ -432,20 +515,29 @@ export class SimulationEngine {
 
     private drawPackets(speed: number) {
         this.packets = this.packets.filter((p) => p.progress < 1);
+        const useGlow = this.packets.length < 200;
         for (const p of this.packets) {
-            p.progress = Math.min(p.progress + 0.02 * speed, 1);
+            p.progress = Math.min(p.progress + 0.025 * speed, 1);
+            const travelProgress = p.delivered
+                ? p.progress
+                : Math.min(p.progress, 0.72);
 
             const ease =
-                p.progress < 0.5
-                    ? 2 * p.progress * p.progress
-                    : -1 + (4 - 2 * p.progress) * p.progress;
+                travelProgress < 0.5
+                    ? 2 * travelProgress * travelProgress
+                    : -1 + (4 - 2 * travelProgress) * travelProgress;
 
             const px = p.src.x + (p.dest.x - p.src.x) * ease;
             const py = p.src.y + (p.dest.y - p.src.y) * ease;
 
             this.ctx.save();
-            this.ctx.shadowBlur = 12;
-            this.ctx.shadowColor = p.color;
+            if (useGlow) {
+                this.ctx.shadowBlur = 12;
+                this.ctx.shadowColor = p.color;
+            }
+            this.ctx.globalAlpha = p.delivered
+                ? 1
+                : Math.max(0, 1 - Math.max(0, p.progress - 0.72) / 0.28);
             this.ctx.beginPath();
             this.ctx.arc(px, py, 4, 0, Math.PI * 2);
             this.ctx.fillStyle = p.color;

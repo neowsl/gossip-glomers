@@ -14,16 +14,27 @@ export class KafkaLogStrategy implements ChallengeStrategy {
     public processEvent(evt: ParsedEvent, engine: SimulationEngine) {
         const store = useMaelstromStore.getState();
 
-        if (evt.type === "send" && evt.src.startsWith("n")) {
-            const current = engine.nodeValues.get(evt.src) || 0;
-            engine.nodeValues.set(evt.src, current + 1);
+        if (
+            evt.type === "send" &&
+            evt.src.startsWith("c") &&
+            evt.dest.startsWith("n")
+        ) {
+            const current = engine.nodeValues.get(evt.dest) || 0;
+            engine.nodeValues.set(evt.dest, current + 1);
             this.totalMessages++;
         }
 
-        if (evt.type === "poll" && evt.src.startsWith("n")) {
-            console.log(evt.raw);
-            const matches = evt.raw.match(/\[(\d+) (\d+)\]/g);
-            const count = matches ? matches.length : 0;
+        if (evt.type === "poll_ok" && evt.src.startsWith("n")) {
+            const msgs = evt.body?.msgs;
+            const count =
+                typeof msgs === "object" && msgs !== null
+                    ? Object.values(msgs).reduce(
+                          (total, records) =>
+                              total +
+                              (Array.isArray(records) ? records.length : 0),
+                          0,
+                      )
+                    : (evt.raw.match(/\[(\d+) (\d+)\]/g)?.length ?? 0);
             engine.nodeValues.set(evt.src, count);
             this.totalMessages++;
         }
