@@ -1,12 +1,5 @@
 import { statusColor } from "@lib/utils";
-import {
-    ExternalLink,
-    GitCompareArrows,
-    GitFork,
-    Send,
-    Wifi,
-    WifiOff,
-} from "lucide-react";
+import { GitCompareArrows, GitFork, Send, Wifi, WifiOff } from "lucide-react";
 import type { FC } from "react";
 import { useMaelstromStore } from "@/lib/store";
 import type { ChallengeId } from "@/lib/types";
@@ -66,7 +59,7 @@ const SidebarLeft: FC = () => {
                     <GitFork className="text-primary" size={32} />
                     <a
                         className="text-center font-bold text-2xl text-primary"
-                        href="/"
+                        href="https://codeberg.org/nealwang/maelstrom-matrix"
                     >
                         MAELSTROM MATRIX
                     </a>
@@ -115,19 +108,19 @@ const SidebarLeft: FC = () => {
                 </div>
 
                 <div className="stats stats-vertical shadow">
-                    <div className="stat">
+                    <div className="stat pt-1 pb-4">
                         <div className="stat-title flex items-center gap-2 text-lg">
                             <span className="text-secondary">
                                 <Send size={24} />
                             </span>{" "}
                             TOTAL MSG
                         </div>
-                        <div className="stat-value text-secondary drop-shadow-[0_0_5px_var(--color-secondary)]">
+                        <div className="stat-value text-3xl text-secondary drop-shadow-[0_0_5px_var(--color-secondary)]">
                             {totalMessages}
                         </div>
                     </div>
 
-                    <div className="stat">
+                    <div className="stat pt-0 pb-4">
                         <div className="stat-title flex items-center gap-2 text-lg">
                             <span
                                 className={`${networkHealthy ? "text-success" : "text-error"}`}
@@ -141,7 +134,7 @@ const SidebarLeft: FC = () => {
                             NETWORK
                         </div>
                         <div
-                            className={`stat-value ${networkHealthy ? "text-success" : "animate-pulse text-error"}`}
+                            className={`stat-value text-3xl ${networkHealthy ? "text-success" : "animate-pulse text-error"}`}
                             style={{
                                 filter: `drop-shadow(0 0 4px var(--color-${networkHealthy ? "success" : "error"}))`,
                             }}
@@ -150,7 +143,7 @@ const SidebarLeft: FC = () => {
                         </div>
                     </div>
 
-                    <div className="stat">
+                    <div className="stat pt-0 pb-4">
                         <div className="stat-title flex items-center gap-2 text-lg">
                             <span
                                 className={`text-${statusColor(convergence)}`}
@@ -165,7 +158,7 @@ const SidebarLeft: FC = () => {
                                 filter: `drop-shadow(0 0 4px var(--color-${statusColor(convergence)}))`,
                             }}
                         >
-                            <span className="countdown">
+                            <span className="countdown text-3xl">
                                 <span
                                     style={
                                         {
@@ -181,24 +174,6 @@ const SidebarLeft: FC = () => {
                         </div>
                     </div>
                 </div>
-
-                <div className="flex-1" />
-
-                <footer className="footer px-2 text-base-content">
-                    <aside>
-                        <p>© {new Date().getFullYear()} Neal Wang.</p>
-                        <p>Code licensed under GPLv3.</p>
-                        <a
-                            className="link flex items-center gap-1"
-                            href="https://codeberg.org/nealwang/maelstrom-matrix"
-                            target="_blank"
-                            rel="noopener"
-                        >
-                            <ExternalLink size={16} />
-                            Codeberg
-                        </a>
-                    </aside>
-                </footer>
             </div>
         </div>
     );

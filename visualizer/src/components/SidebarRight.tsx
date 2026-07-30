@@ -1,5 +1,5 @@
 // biome-ignore-all lint/suspicious/noArrayIndexKey: code line numbers
-import { Pause, Play, TimerReset } from "lucide-react";
+import { ExternalLink, Pause, Play, TimerReset } from "lucide-react";
 import type { FC } from "react";
 import { useMaelstromStore } from "@/lib/store";
 
@@ -90,7 +90,7 @@ const SidebarRight: FC = () => {
                 <div className="mb-4 text-center text-lg text-secondary">
                     -- LOG STREAM --
                 </div>
-                <div className="mockup-code min-h-0 w-full flex-1 overflow-y-auto bg-base-200 px-2 font-mono text-xs">
+                <div className="mockup-code mb-4 min-h-0 w-full flex-1 overflow-y-auto bg-base-200 px-2 font-mono text-xs">
                     {rawLogs
                         .filter((_, i) => i <= 80)
                         .map((line, i) => (
@@ -105,6 +105,22 @@ const SidebarRight: FC = () => {
                             </pre>
                         ))}
                 </div>
+
+                <footer className="footer px-2 text-base-content">
+                    <aside>
+                        <p>© {new Date().getFullYear()} Neal Wang.</p>
+                        <p>Code licensed under GPLv3.</p>
+                        <a
+                            className="link flex items-center gap-1"
+                            href="https://codeberg.org/nealwang/maelstrom-matrix"
+                            target="_blank"
+                            rel="noopener"
+                        >
+                            <ExternalLink size={16} />
+                            Codeberg
+                        </a>
+                    </aside>
+                </footer>
             </div>
         </div>
     );
