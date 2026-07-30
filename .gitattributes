@@ -1,0 +1,7 @@
+visualizer/** linguist-documentation=true
+visualizer/** linguist-vendored=true
+visualizer/** linguist-generated=true
+
+scripts/** linguist-documentation=true
+scripts/** linguist-vendored=true
+scripts/** linguist-generated=true
