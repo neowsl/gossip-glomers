@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   deploy:
-    runs-on: codeberg-small
+    runs-on: gimli
     defaults:
       run:
         working-directory: visualizer
@@ -23,6 +23,6 @@ jobs:
       - uses: https://codeberg.org/git-pages/action@v2
         with:
           site: https://maelstrom.nealwang.dev/
-          server: codeberg.page
-          token: ${{ forge.token }}
+          server: maelstrom.nealwang.dev
+          token: ${{ forgejo.token }}
           source: visualizer/dist/
