@@ -59,7 +59,7 @@ const SidebarLeft: FC = () => {
                     <GitFork className="text-primary" size={32} />
                     <a
                         className="text-center font-bold text-2xl text-primary"
-                        href="https://codeberg.org/nealwang/maelstrom-matrix"
+                        href="https://git.nealwang.dev/neo/maelstrom-matrix"
                     >
                         MAELSTROM MATRIX
                     </a>
