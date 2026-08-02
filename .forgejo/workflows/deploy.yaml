@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   deploy:
-    runs-on: gimli
+    runs-on: mordor
     defaults:
       run:
         working-directory: visualizer
