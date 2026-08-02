@@ -17,9 +17,9 @@ jobs:
         working-directory: visualizer
     steps:
       - uses: actions/checkout@v4
-      - name: Install Bun (musl on Alpine)
+      - name: Install Bun
         run: |
-          apk add --no-cache curl
+          apk add --no-cache curl bash
           curl -fsSL https://bun.sh/install | bash -s -- bun-v1.3.14
           echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
       - run: bun install --frozen-lockfile
