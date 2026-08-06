@@ -8,7 +8,8 @@ import (
 	maelstrom "github.com/jepsen-io/maelstrom/demo/go"
 )
 
-// versionedValue holds
+// versionedValue holds not only a value, but also a Snowflake ID to allow for
+// a total ordering of the messages that arrive.
 type versionedValue struct {
 	Snowflake snowflake.ID
 	Value     int
@@ -81,12 +82,12 @@ func (s *ReadUncommittedStore) HandleTransaction(txn txn) {
 }
 
 // Write updates the value of the key with a LWW (Last-Write-Wins) policy.
-// I.e. the versionedValue with a larger snowflake is kept.
+// I.e. the versionedValue with a larger Snowflake is kept.
 func (s *ReadUncommittedStore) Write(key int, versionedValue versionedValue) {
 	curr := s.store.Read(key)
 	if curr == nil || versionedValue.Snowflake > curr.Snowflake {
 		// update only if there is currently no value or if the new value's
-		// snowflake is larger
+		// Snowflake ID is larger
 		s.store.Write(key, versionedValue)
 	}
 }

@@ -149,6 +149,8 @@ I used a **LWW (Last-Write-Wins)** model for determining which writes to keep. W
 
 💡 [Apache Cassandra](https://cassandra.apache.org/_/index.html) is a distributed database that uses LWW!
 
+💡 Snowflake IDs are extremely useful for this challenge because they solve many of the core problems addressed by [Lamport Clocks](https://lamport.azurewebsites.net/pubs/time-clocks.pdf) while also remaining decentralised and thus totally available.
+
 #### Design decisions
 
 - I reused code from Challenge 2's Snowflake, Challenge 3's Mailbox, and Challenge 6a's InMemoryStore!
