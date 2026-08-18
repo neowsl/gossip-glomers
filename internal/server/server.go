@@ -40,6 +40,8 @@ func New(challengeID *string) *Server {
 		txnStore = transaction.NewInMemoryStore[int, int]()
 	case "6b":
 		txnStore = transaction.NewReadUncommittedStore()
+	case "6c":
+		txnStore = transaction.NewReadCommittedStore()
 	}
 
 	routes := make(service.Routes)

@@ -21,7 +21,6 @@ type versionedValue struct {
 type ReadUncommittedStore struct {
 	store   *InMemoryStore[int, versionedValue]
 	mailbox *mailbox.Mailbox[txn]
-	gen     *snowflake.Generator
 }
 
 func NewReadUncommittedStore() *ReadUncommittedStore {
@@ -52,7 +51,6 @@ func NewReadUncommittedStore() *ReadUncommittedStore {
 
 func (s *ReadUncommittedStore) SetNode(node *maelstrom.Node) {
 	s.mailbox.SetNode(node)
-	s.gen = snowflake.NewGenerator(node.ID())
 }
 func (s *ReadUncommittedStore) SetTopology(topology map[string][]string) {
 	s.mailbox.SetTopology(topology)

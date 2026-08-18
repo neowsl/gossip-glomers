@@ -37,6 +37,9 @@ test-single-node-transactions:
 test-read-uncommitted-transactions:
     maelstrom test -w txn-rw-register --bin ~/go/bin/gossip-glomers --node-count 2 --concurrency 2n --time-limit 20 --rate 1000 --consistency-models read-uncommitted --availability total --nemesis partition -- --challenge 6b
 
+test-read-committed-transactions:
+    maelstrom test -w txn-rw-register --bin ~/go/bin/gossip-glomers --node-count 2 --concurrency 2n --time-limit 20 --rate 1000 --consistency-models read-committed --availability total --nemesis partition -- --challenge 6c
+
 serve:
     maelstrom serve
 
