@@ -4,6 +4,8 @@
 
 In my ongoing efforts to procrastinate from schoolwork, I stumbled across this challenge, [Gossip Glomers](https://fly.io/dist-sys) by [Fly.io](https://fly.io). I thought it'd be a nice way to develop some Go skills while also learning about distributed systems!
 
+Along with the challenges, I've created a [visualisation software](https://maelstrom.nealwang.dev) to showcase the underlying events that support these wonderful distributed systems. Feel free to check it out!
+
 <img src="https://madebyhuman.iamjarl.com/badges/crafted-white.svg" alt="Crafted by Human" width="180" height="60">
 
 ## Challenges
@@ -143,7 +145,7 @@ A fairly straightforward challenge and an intro to **MVCC**. The goal was to sup
 
 An extremely interesting challenge, not just from a dist-sys angle, but from an architectural perspective as well. I refactored so much of the codebase...
 
-The main lesson of this challenge was understanding which operations/values to keep to guarantee a [Read Uncommitted](https://jepsen.io/consistency/models/read-uncommitted) consistency model. Since this challenge required **total availability**, I figured Read operations must make direct queries into the current local state of each node. Therefore, the challenge lied in how to handle Write operations.
+This challenge emphasised a [Read Uncommitted](https://jepsen.io/consistency/models/read-uncommitted) model, so I had to guarantee **no dirty writes** - i.e. writes from separate transactions must not get entangled. The main lesson of this challenge was understanding which operations/values to keep. Since this challenge required **total availability**, I figured Read operations must make direct queries into the current local state of each node. Therefore, the challenge lied in how to handle Write operations.
 
 I used a **LWW (Last-Write-Wins)** model for determining which writes to keep. When a transaction is received, it is immediately **replicated** across all nodes. Since this replication uses Mailbox Envelopes, each transaction is also tied to a Snowflake ID (shoutout Challenge 2 again)! These Snowflake IDs increase with time, so we can implement LWW by simply keeping the largest Snowflake ID of the writes!
 
@@ -156,3 +158,19 @@ I used a **LWW (Last-Write-Wins)** model for determining which writes to keep. W
 - I reused code from Challenge 2's Snowflake, Challenge 3's Mailbox, and Challenge 6a's InMemoryStore!
 - Replicated Write operations are handled with a LWW policy for low latency and total availability.
 - Read operations observe the current local state of each node.
+
+### 6c. Totally-Available, Read Committed Transactions
+
+One of, if not the, hardest challenge here conceptually. This challenge emphasised a [Read Committed](https://jepsen.io/consistency/models/read-committed) model, which on top of Read Uncommitted, added the requirement of **no dirty reads** - i.e. reads must not view uncommitted writes.
+
+After reading through *Designing Data-Intensive Applications*, I settled on an **multiversion concurrency control (MVCC)** implementation.
+
+#### Design decisions
+
+- Much of the code is similar to Challenge 6b, including replication and LWW-ordering.
+- Transactions performed on an **atomic snapshot** of the state of a store. Since these snapshots are decoupled, no transaction blocks another (aside from a minute bit of time required to perform a snapshot).
+- After applying a transaction, the snapshot is then **atomically written** using LWW rules.
+
+---
+
+🎉 That's all, folks! Huge thanks to [Kyle Kingsbury](https://aphyr.com/about) and the team over at [Fly.io](https://fly.io) for putting together these amazing challenges. They were incredibly fun to work through!
