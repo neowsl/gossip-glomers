@@ -9,6 +9,7 @@ import { EchoStrategy } from "@/lib/strategies/echo";
 import { GCounterStrategy } from "@/lib/strategies/gCounter";
 import { KafkaLogStrategy } from "@/lib/strategies/kafkaLog";
 import { UniqueIdsStrategy } from "@/lib/strategies/uniqueIds";
+import { TxnStoreStrategy } from "@/lib/strategies/txnStore";
 import { statusColor } from "@/lib/utils";
 
 const PLAYBACK_DURATION_MS = 30_000;
@@ -93,6 +94,9 @@ export function MaelstromCanvas() {
                 break;
             case "kafka-log":
                 engine.loadChallenge(new KafkaLogStrategy(), topology);
+                break;
+            case "txn-store":
+                engine.loadChallenge(new TxnStoreStrategy(), topology);
                 break;
         }
 

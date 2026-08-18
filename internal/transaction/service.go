@@ -61,6 +61,20 @@ func Routes(node *maelstrom.Node, store Store) service.Routes {
 		"init": func(msg maelstrom.Message) error {
 			store.SetNode(node)
 
+			// set topology to generate log messages for frontend
+			nodeIDs := node.NodeIDs()
+			topology := make(map[string][]string, len(nodeIDs))
+			for _, id := range nodeIDs {
+				neighbours := make([]string, 0, len(nodeIDs)-1)
+				for _, other := range nodeIDs {
+					if other != id {
+						neighbours = append(neighbours, other)
+					}
+				}
+				topology[id] = neighbours
+			}
+			store.SetTopology(topology)
+
 			return nil
 		},
 		"topology": func(msg maelstrom.Message) error {

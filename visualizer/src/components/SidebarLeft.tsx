@@ -35,6 +35,11 @@ const CHALLENGES: Record<ChallengeId, ChallengeDetails> = {
         objective:
             "Shard log ownership across worker nodes using hash-based routing. Observe scatter-gather requests moving directly between nodes without lin-kv contention.",
     },
+    "txn-store": {
+        displayName: "MVCC Read-Committed Store",
+        objective:
+            "Fully-available distributed transaction store with a Read Committed consistency model. Apply MVCC versioned snapshots with LWW and ensure reads only observe committed state.",
+    },
 };
 
 const SidebarLeft: FC = () => {
@@ -120,7 +125,7 @@ const SidebarLeft: FC = () => {
                         </div>
                     </div>
 
-                    <div className="stat pt-0 pb-4">
+                    <div className="stat">
                         <div className="stat-title flex items-center gap-2 text-lg">
                             <span
                                 className={`${networkHealthy ? "text-success" : "text-error"}`}
@@ -143,7 +148,7 @@ const SidebarLeft: FC = () => {
                         </div>
                     </div>
 
-                    <div className="stat pt-0 pb-4">
+                    <div className="stat">
                         <div className="stat-title flex items-center gap-2 text-lg">
                             <span
                                 className={`text-${statusColor(convergence)}`}

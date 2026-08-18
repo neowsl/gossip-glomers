@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { type ParsedEvent, type ParsedTopology, parseEvents } from "./parser";
 import type { ChallengeId } from "./types";
 
-const INITIAL_CHALLENGE: ChallengeId = "kafka-log";
+const INITIAL_CHALLENGE: ChallengeId = "txn-store";
 
 interface MaelstromState {
     challengeId: ChallengeId;

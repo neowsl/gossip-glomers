@@ -55,6 +55,8 @@ const PROTOCOL_COLORS: Record<string, string> = {
     write_ok: COLORS.SUCCESS,
     cas: COLORS.WARNING,
     cas_ok: COLORS.SUCCESS,
+    txn: COLORS.CONTENT,
+    txn_ok: COLORS.SUCCESS,
 };
 
 export class SimulationEngine {

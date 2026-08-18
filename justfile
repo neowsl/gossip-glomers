@@ -54,6 +54,8 @@ gen-logs:
     just export-log g-counter
     maelstrom test -w kafka --bin ~/go/bin/gossip-glomers --node-count 9 --concurrency 2n --time-limit 5 --rate 100 -- --challenge 5c
     just export-log kafka-log
+    maelstrom test -w txn-rw-register --bin ~/go/bin/gossip-glomers --node-count 4 --concurrency 2n --time-limit 10 --rate 100 --consistency-models read-committed --availability total --nemesis partition -- --challenge 6c
+    just export-log txn-store
 
 export-log challenge run-dir="store/current":
     #!/usr/bin/env bash

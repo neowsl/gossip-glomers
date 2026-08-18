@@ -3,7 +3,8 @@ export type ChallengeId =
     | "unique-ids"
     | "broadcast"
     | "g-counter"
-    | "kafka-log";
+    | "kafka-log"
+    | "txn-store";
 
 export interface Point {
     x: number;
