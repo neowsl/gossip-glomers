@@ -1,8 +1,9 @@
 package logstore
 
-import "maps"
-
-import "sync"
+import (
+	"maps"
+	"sync"
+)
 
 // InMemoryStore is an in-memory implementation of a log Store.
 type InMemoryStore struct {
