@@ -31,13 +31,21 @@ func NewCounter(node *maelstrom.Node) *Counter {
 func (c *Counter) Add(delta int) {
 	ctx := context.Background()
 
-	// each node writes to a unique key, so no write contention
-	currVal, err := c.kv.ReadInt(ctx, counterPrefix+":"+c.node.ID())
-	if err != nil {
-		currVal = 0
-	}
+	key := counterPrefix + ":" + c.node.ID()
 
-	c.kv.Write(ctx, counterPrefix+":"+c.node.ID(), currVal+delta)
+	for {
+		// each node writes to a unique key, so less write contention
+		currVal, err := c.kv.ReadInt(ctx, key)
+		if err != nil {
+			currVal = 0
+		}
+
+		err = c.kv.CompareAndSwap(ctx, key, currVal, currVal+delta, true)
+
+		if err == nil {
+			break
+		}
+	}
 }
 
 // Read returns the current value of the Gounter.
