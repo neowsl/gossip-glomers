@@ -3,6 +3,7 @@ package transaction
 import (
 	"gossip-glomers/internal/mailbox"
 	"gossip-glomers/internal/snowflake"
+	"slices"
 	"time"
 
 	maelstrom "github.com/jepsen-io/maelstrom/demo/go"
@@ -58,7 +59,8 @@ func (s *ReadUncommittedStore) SetTopology(topology map[string][]string) {
 
 func (s *ReadUncommittedStore) HandleTransaction(txn txn) {
 	// replicate this transaction across all other nodes
-	envelope := s.mailbox.SendAll(txn)
+	replica := slices.Clone(txn)
+	envelope := s.mailbox.SendAll(replica)
 
 	for i := range txn {
 		op := &txn[i]
@@ -81,11 +83,12 @@ func (s *ReadUncommittedStore) HandleTransaction(txn txn) {
 
 // Write updates the value of the key with a LWW (Last-Write-Wins) policy.
 // I.e. the versionedValue with a larger Snowflake is kept.
-func (s *ReadUncommittedStore) Write(key int, versionedValue versionedValue) {
-	curr := s.store.Read(key)
-	if curr == nil || versionedValue.Snowflake > curr.Snowflake {
-		// update only if there is currently no value or if the new value's
-		// Snowflake ID is larger
-		s.store.Write(key, versionedValue)
-	}
+func (s *ReadUncommittedStore) Write(key int, value versionedValue) {
+	s.store.Update(
+		key,
+		func(curr *versionedValue) (next versionedValue, newer bool) {
+			// >= because writes from the same transaction should update
+			return value, curr == nil || value.Snowflake >= curr.Snowflake
+		},
+	)
 }

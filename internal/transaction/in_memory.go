@@ -63,3 +63,25 @@ func (s *InMemoryStore[K, V]) Write(key K, value V) {
 
 	s.values[key] = value
 }
+
+// Update is an atomic operation for updating values. It takes an update
+// function, which returns both a next value and a flag indicating if the next
+// value is newer. Update will only update the value if newer is true.
+func (s *InMemoryStore[K, V]) Update(
+	key K,
+	update func(curr *V) (next V, newer bool),
+) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	var curr *V
+	val, ok := s.values[key]
+	if ok {
+		curr = &val
+	}
+
+	next, ok := update(curr)
+	if ok {
+		s.values[key] = next
+	}
+}

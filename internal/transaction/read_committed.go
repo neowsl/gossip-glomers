@@ -2,6 +2,7 @@ package transaction
 
 import (
 	"gossip-glomers/internal/mailbox"
+	"slices"
 	"sync"
 	"time"
 
@@ -60,7 +61,8 @@ func (s *ReadCommittedStore) SetTopology(topology map[string][]string) {
 }
 
 func (s *ReadCommittedStore) HandleTransaction(txn txn) {
-	envelope := s.mailbox.SendAll(txn)
+	replica := slices.Clone(txn)
+	envelope := s.mailbox.SendAll(replica)
 
 	// 1. take atomic snapshot the current state to avoid dirty reads
 	keys := make([]int, 0, len(txn))
