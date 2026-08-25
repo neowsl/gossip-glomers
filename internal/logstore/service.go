@@ -25,8 +25,6 @@ type listCommittedOffsetsBody struct {
 	Keys []string `json:"keys"`
 }
 
-type appendRerouteBody = sendBody
-
 func Routes(node *maelstrom.Node, store Store) service.Routes {
 	return service.Routes{
 		"send": func(msg maelstrom.Message) error {
@@ -35,7 +33,10 @@ func Routes(node *maelstrom.Node, store Store) service.Routes {
 				return err
 			}
 
-			offset, _ := store.Append(body.Key, body.Msg)
+			offset, err := store.Append(body.Key, body.Msg)
+			if err != nil {
+				return err
+			}
 
 			return node.Reply(msg, map[string]any{
 				"type":   "send_ok",
@@ -48,7 +49,10 @@ func Routes(node *maelstrom.Node, store Store) service.Routes {
 				return err
 			}
 
-			msgs, _ := store.Poll(body.Offsets)
+			msgs, err := store.Poll(body.Offsets)
+			if err != nil {
+				return err
+			}
 
 			return node.Reply(msg, map[string]any{
 				"type": "poll_ok",
@@ -61,7 +65,10 @@ func Routes(node *maelstrom.Node, store Store) service.Routes {
 				return err
 			}
 
-			store.Commit(body.Offsets)
+			err := store.Commit(body.Offsets)
+			if err != nil {
+				return err
+			}
 
 			return node.Reply(msg, map[string]any{
 				"type": "commit_offsets_ok",
@@ -73,7 +80,10 @@ func Routes(node *maelstrom.Node, store Store) service.Routes {
 				return err
 			}
 
-			offsets, _ := store.ListCommitted(body.Keys)
+			offsets, err := store.ListCommitted(body.Keys)
+			if err != nil {
+				return err
+			}
 
 			return node.Reply(msg, map[string]any{
 				"type":    "list_committed_offsets_ok",

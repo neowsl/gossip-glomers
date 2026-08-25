@@ -9,11 +9,6 @@ import (
 	maelstrom "github.com/jepsen-io/maelstrom/demo/go"
 )
 
-const (
-	messagesPerBatch = 20
-	maxBackoff       = 3 * time.Second
-)
-
 type broadcastBody struct {
 	service.BaseBody
 	Message int `json:"message"`

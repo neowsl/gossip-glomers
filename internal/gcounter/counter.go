@@ -55,7 +55,7 @@ func (c *Counter) Read() int {
 	// since the KV store is sequentially consistent, "force" an update by
 	// making a write call
 	barrierKey := c.gen.NextID().String() + "-barrier"
-	c.kv.Write(ctx, barrierKey, 0)
+	_ = c.kv.Write(ctx, barrierKey, 0)
 
 	sum := 0
 	for _, id := range c.node.NodeIDs() {
