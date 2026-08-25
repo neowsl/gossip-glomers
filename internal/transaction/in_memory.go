@@ -37,7 +37,7 @@ func (s *InMemoryStore[K, V]) HandleTransaction(txn txn) {
 			}
 		case "w":
 			castedKey, _ := any(op.Key).(K)
-			castedValue, _ := any(op.Value).(V)
+			castedValue, _ := any(*op.Value).(V)
 			s.Write(castedKey, castedValue)
 		}
 	}
