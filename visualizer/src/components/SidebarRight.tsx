@@ -112,6 +112,15 @@ const SidebarRight: FC = () => {
                         <p>Code licensed under GPLv3.</p>
                         <a
                             className="link flex items-center gap-1"
+                            href="https://docs.maelstrom.nealwang.dev"
+                            target="_blank"
+                            rel="noopener"
+                        >
+                            <ExternalLink size={16} />
+                            Documentation
+                        </a>
+                        <a
+                            className="link flex items-center gap-1"
                             href="https://git.nealwang.dev/neo/maelstrom-matrix"
                             target="_blank"
                             rel="noopener"
