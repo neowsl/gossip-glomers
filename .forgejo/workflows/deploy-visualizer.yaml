@@ -1,4 +1,4 @@
-name: Deploy Maelstrom Matrix Visualizer
+name: Deploy visualiser
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 concurrency:
-  group: "pages"
+  group: maelstrom-visualizer-pages
   cancel-in-progress: true
 
 jobs:

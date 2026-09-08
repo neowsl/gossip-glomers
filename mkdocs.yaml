@@ -1,0 +1,6 @@
+site_name: Maelstrom Matrix
+site_url: https://docs.maelstrom.nealwang.dev/
+nav:
+  - Home: index.md
+  - Challenges: challenges.md
+  - Engineering Log: engineering-log.md

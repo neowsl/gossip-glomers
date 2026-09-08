@@ -1,6 +1,9 @@
 build:
     go install ./cmd/...
 
+docs:
+    uv run --group docs mkdocs serve
+
 test-echo:
     maelstrom test -w echo --bin ~/go/bin/gossip-glomers --node-count 1 --time-limit 10 -- --challenge 1
 
