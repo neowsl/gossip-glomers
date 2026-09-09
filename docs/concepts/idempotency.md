@@ -20,7 +20,7 @@ Idempotency is an important property to enforce in distributed systems. A classi
 
 ## Implementation
 
-There are many ways to implement idempotency in a system. In Maelstrom Matrix, my go-to solution was to attach a [Snowflake ID](concepts/snowflake-ids.md) to each operation. The server then keeps track of every ID it has seen and simply rejects any duplicate IDs. So now,
+There are many ways to implement idempotency in a system. In Maelstrom Matrix, my go-to solution was to attach a [Snowflake ID](snowflake-ids.md) to each operation. The server then keeps track of every ID it has seen and simply rejects any duplicate IDs. So now,
 
 1. I tap "Place Order" on my McDonald's app. Along with my order, my phone attaches an `ID = 1` idempotency key.
 2. The server accepts the order, remembers `ID = 1`, and responds with a confirmation.
