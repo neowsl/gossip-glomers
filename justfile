@@ -2,7 +2,9 @@ build:
     go install ./cmd/...
 
 docs:
-    uv run --group docs mkdocs serve
+    env -u VIRTUAL_ENV uv pip install --python .venv/bin/python --index "https://artifactory.metro.ad.selinc.com/artifactory/api/pypi/sel-pypi/simple" "mkdocs==1.6.1" "pymdown-extensions==11.0.2"
+    env -u VIRTUAL_ENV uv sync --frozen --no-dev --group docs
+    uv run --no-sync --group docs mkdocs serve
 
 test-echo:
     maelstrom test -w echo --bin ~/go/bin/gossip-glomers --node-count 1 --time-limit 10 -- --challenge 1

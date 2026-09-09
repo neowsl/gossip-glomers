@@ -1,4 +1,4 @@
-site_name: Maelstrom Matrix
+site_name: "Maelstrom Matrix"
 site_url: "https://docs.maelstrom.nealwang.dev"
 
 repo_url: "https://git.nealwang.dev/neo/maelstrom-matrix"
@@ -7,7 +7,17 @@ nav:
   - Home: index.md
   - Challenges: challenges.md
   - Engineering Log: engineering-log.md
+  - Concepts:
+      - Idempotency: concepts/idempotency.md
+
+extra_css:
+  - styles/extra.css
 
 markdown_extensions:
+  - pymdownx.arithmatex:
+      generic: true
   - toc:
       permalink: true
+
+hooks:
+  - docs/hooks/typst_math.py

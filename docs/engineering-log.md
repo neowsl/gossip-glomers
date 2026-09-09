@@ -40,13 +40,13 @@ Significantly harder than "Single-Node Broadcast". The main challenge was preven
 
 - I used a map instead of a set, because the keys of the map allow us to uniquely identify messages, allowing things like duplicate messages!
 - If the messages were larger, nodes could proactively "probe" their sendees to check if they've already received the message, potentially reducing the amount of data sent over a network.
-- I learned that the unique IDs (snowflakes) enforce a concept known as **idempotency**, where duplicate operations only produce one result :)
+- I learned that the unique IDs (snowflakes) enforce a concept known as [idempotency](concepts/idempotency.md), where duplicate operations only produce one result :)
 
 ## 3c. Fault Tolerant Broadcast
 
 Some really interesting problems here! In order to preserve and forward messages after a network partitions and heals, a lot more work has to be done.
 
-💡 I essentially got to experience the [Two Generals' Problem](https://www.youtube.com/watch?v=IP-rGJKSZ3s) firsthand!
+> 💡 I essentially got to experience the [Two Generals' Problem](https://www.youtube.com/watch?v=IP-rGJKSZ3s) firsthand!
 
 ### Design decisions
 
@@ -103,7 +103,7 @@ Also a fairly simple migration from the `logstore.InMemoryStore` to a `Distribut
 
 ---
 
-♻️ Since the upcoming challenges are beginning to get very tricky, it was at this point when I refactored the underlying server architecture. I split the individual services and handlers into separate files and used a **routing table** to string everything together. This decoupled the services, allowing for higher **orthagonality** in my code. The old architecture can be found on [this commit](https://github.com/neowsl/maelstrom-matrix/tree/df03d59afb5f886ddd2921cdc2070343c70ac8b1).
+> ♻️ Since the upcoming challenges are beginning to get very tricky, it was at this point when I refactored the underlying server architecture. I split the individual services and handlers into separate files and used a **routing table** to string everything together. This decoupled the services, allowing for higher **orthagonality** in my code. The old architecture can be found on [this commit](https://github.com/neowsl/maelstrom-matrix/tree/df03d59afb5f886ddd2921cdc2070343c70ac8b1).
 
 ## 5c. Efficient Kafka-Style Log
 
@@ -131,7 +131,7 @@ A fairly straightforward challenge and an intro to **MVCC**. The goal was to sup
 - This was also a fun challenge to explore handling JSON serde with Go. Null pointers were a real pain though...
 - This challenge was also by far the most difficult to architect; I tried to make my interfaces reusable for the upcoming iterations of this challenge, but may very well need to make some more abstractions.
 
-♻️ The following challenges reuse much of my broadcasting code from Challenge 3, so I decided to pull out the retry/backoff logic into a `mailbox` library! I also used Go generics to generalise `transactions.InMemoryStore` to support 6b and 6c.
+> ♻️ The following challenges reuse much of my broadcasting code from Challenge 3, so I decided to pull out the retry/backoff logic into a `mailbox` library! I also used Go generics to generalise `transactions.InMemoryStore` to support 6b and 6c.
 
 ## 6b. Totally-Available, Read Uncommitted Transactions
 
@@ -141,9 +141,9 @@ This challenge emphasised a [Read Uncommitted](https://jepsen.io/consistency/mod
 
 I used a **LWW (Last-Write-Wins)** model for determining which writes to keep. When a transaction is received, it is immediately **replicated** across all nodes. Since this replication uses Mailbox Envelopes, each transaction is also tied to a Snowflake ID (shoutout Challenge 2 again)! These Snowflake IDs increase with time, so we can implement LWW by simply keeping the largest Snowflake ID of the writes!
 
-💡 [Apache Cassandra](https://cassandra.apache.org/_/index.html) is a distributed database that uses LWW!
+> 💡 [Apache Cassandra](https://cassandra.apache.org/_/index.html) is a distributed database that uses LWW!
 
-💡 Snowflake IDs are extremely useful for this challenge because they solve many of the core problems addressed by [Lamport Clocks](https://lamport.azurewebsites.net/pubs/time-clocks.pdf) while also remaining decentralised and thus totally available.
+> 💡 Snowflake IDs are extremely useful for this challenge because they solve many of the core problems addressed by [Lamport Clocks](https://lamport.azurewebsites.net/pubs/time-clocks.pdf) while also remaining decentralised and thus totally available.
 
 ### Design decisions
 

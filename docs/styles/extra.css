@@ -1,0 +1,15 @@
+.typst-math > svg {
+    margin-top: -4px;
+    overflow: visible;
+}
+
+div.typst-math {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.sr-only {
+    position: absolute;
+    left: -9999px;
+}

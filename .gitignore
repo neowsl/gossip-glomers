@@ -4,5 +4,8 @@
 # MkDocs
 /site/
 
+# Python
+__pycache__/
+
 # direnv
 /.direnv/
