@@ -2,6 +2,8 @@
 
 Exploring distributed systems via the [Gossip Glomers](https://fly.io/dist-sys) challenges!
 
+---
+
 To see a super cool demo of the challenges, visit my [Maelstrom Matrix visualiser](https://maelstrom.nealwang.dev)!
 
 Or read about my development process in my [engineering log](engineering-log.md)!

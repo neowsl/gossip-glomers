@@ -1,6 +1,13 @@
 site_name: Maelstrom Matrix
-site_url: https://docs.maelstrom.nealwang.dev/
+site_url: "https://docs.maelstrom.nealwang.dev"
+
+repo_url: "https://git.nealwang.dev/neo/maelstrom-matrix"
+
 nav:
   - Home: index.md
   - Challenges: challenges.md
   - Engineering Log: engineering-log.md
+
+markdown_extensions:
+  - toc:
+      permalink: true
