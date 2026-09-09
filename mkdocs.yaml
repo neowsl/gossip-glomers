@@ -9,6 +9,7 @@ nav:
   - Engineering Log: engineering-log.md
   - Concepts:
       - Idempotency: concepts/idempotency.md
+      - Snowflake IDs: concepts/snowflake-ids.md
 
 extra_css:
   - styles/extra.css

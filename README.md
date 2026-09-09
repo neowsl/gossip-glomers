@@ -1,3 +1,3 @@
 # Maelstrom Matrix / Gossip Glomers
 
-Please visit [the docs](https://docs.maelstrom.nealwang.dev) for more information about this project!
+Please visit https://maelstrom.nealwang.dev/docs for more information about this project!

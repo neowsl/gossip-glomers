@@ -112,7 +112,7 @@ const SidebarRight: FC = () => {
                         <p>Code licensed under GPLv3.</p>
                         <a
                             className="link flex items-center gap-1"
-                            href="https://docs.maelstrom.nealwang.dev"
+                            href="https://maelstrom.nealwang.dev/docs"
                             target="_blank"
                             rel="noopener"
                         >
